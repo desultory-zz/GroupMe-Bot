@@ -38,10 +38,13 @@ if ($text[0] == "/" && in_array($sender_id,$admins)) {
 	if ($text == "/help") {
 		//Help message
 		$message = '
-		/responses lists current respones, 
-		/addresponse makes a new response in the format "/addresponse "phrase" "response"" 
-		/delresponse deletes a reaponse in the format "/delresponse "phrase"" 
-		/editresponse edits a response in the format "/editresponse "phrase" "response"" 
+		/responses lists current respones
+		/addresponse makes a new response in the format "/addresponse "phrase" "response""
+		/delresponse deletes a reaponse in the format "/delresponse "phrase""
+		/editresponse edits a response in the format "/editresponse "phrase" "response""
+		/admins lists current admins by user id
+		/addadmin adds an admin in the format "/addadmin "userid""
+		/deladmin delets an admin in the format "/deladmin "userid""
 		';
 	} else if ($text == "/responses") {
 		//Goes through the array of responses and puts each set on one line
@@ -67,20 +70,25 @@ if ($text[0] == "/" && in_array($sender_id,$admins)) {
 	} else if (strpos($text, '/delresponse') !== FALSE) {
 		//Checks to see if the arguements are set correctly
 		if (isset($command[1][0]) && $command[1][0] !== "" && !isset($command[1][1])) {
-			//loads current responses by reading the responses.php file
-			$currentresponses = file('responses.php');
-			//Reads each line of the responses file (now in array currentresponses)
-			foreach ($currentresponses as $linenumber => $line) {
-				//Checks to see if the line contains the response that is being deleted
-				if (strpos($line, $command[0][0]) !== FALSE) {
-					//Once that response is found, loads the contents of the responses file into new variable newresponses
-					$newresponses = file_get_contents('responses.php');
-					//Deletes appropriate line
-					$newresponses = str_replace($line, '', $newresponses);
-					//Writes the modified version back to the responses.php file
-					file_put_contents('responses.php', $newresponses);
-					$message = 'Deleted response for '.$command[0][0];
+			//Checks to see if that response is already in the responses file first
+			if (search_array($command[1][0], $responses)) {
+				//loads current responses by reading the responses.php file
+				$currentresponses = file('responses.php');
+				//Reads each line of the responses file (now in array currentresponses)
+				foreach ($currentresponses as $linenumber => $line) {
+					//Checks to see if the line contains the response that is being deleted
+					if (strpos($line, $command[0][0]) !== FALSE) {
+						//Once that response is found, loads the contents of the responses file into new variable newresponses
+						$newresponses = file_get_contents('responses.php');
+						//Deletes appropriate line
+						$newresponses = str_replace($line, '', $newresponses);
+						//Writes the modified version back to the responses.php file
+						file_put_contents('responses.php', $newresponses);
+						$message = 'Deleted response for '.$command[0][0];
+					}
 				}
+			} else {
+				$message = 'There is no response for the phrase '.$command[0][0].', nothing to delete';
 			}
 		} else {
 			$message = 'Invalid input';
@@ -107,6 +115,51 @@ if ($text[0] == "/" && in_array($sender_id,$admins)) {
 				}
 			} else {
 				$message = 'That phrase does not have a response to edit';
+			}
+		} else {
+			$message = 'Invalid input';
+		}
+	} else if ($text == "/admins") {
+		//Goes through the array of admins and puts each user id on one line
+		foreach($admins as $val) {
+			$message .= "$val\n";
+		}
+	} else if (strpos($text, '/addadmin') !== FALSE) {
+		//Checks to see if the arguments are set correctly before continuing
+		if (isset($command[1][0]) && $command[1][0] !== "" && !isset($command[1][1])) {
+			//Checks to see if that user is already in the admins file first
+			if (in_array($command[1][0], $admins)) {
+				$message = 'That user is already an admin';
+			} else {
+				//Adds the new user id to admin file
+				file_put_contents('admins.php',str_replace('$admins = [', "\$admins = [\n\t".$command[0][0].', ', file_get_contents('admins.php')));
+				$message = 'Added admin with user id '.$command[1][0].' to the admins file';
+			}
+		} else {
+			$message = 'Invalid input';
+		}
+	} else if (strpos($text, '/deladmin') !== FALSE) {
+		//Checks to see if the arguements are set correctly
+		if (isset($command[1][0]) && $command[1][0] !== "" && !isset($command[1][1])) {
+			//Checks to see if that user id is an admin
+			if (in_array($command[1][0], $admins)) {
+				//loads current admins by reading the admins.php file
+				$currentadmins = file('admins.php');
+				//Reads each line of the admins file (now in array currentadmins)
+				foreach ($currentadmins as $linenumber => $line) {
+					//Checks to see if the line contains the user id that is being deleted
+					if (strpos($line, $command[0][0]) !== FALSE) {
+						//Once that user id is found, loads the contents of the admins file into new variable newadmins
+						$newadmins = file_get_contents('admins.php');
+						//Deletes appropriate line
+						$newadmins = str_replace($line, '', $newadmins);
+						//Writes the modified version back to the admin.php file
+						file_put_contents('admins.php', $newadmins);
+						$message = 'Removed admin with user id '.$command[0][0];
+					}
+				}
+			} else {
+				$message = 'User '.$command[0][0].' is not an admin, nothing to delete';
 			}
 		} else {
 			$message = 'Invalid input';
