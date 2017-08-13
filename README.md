@@ -1,11 +1,26 @@
-To get started with this bot, add your token to the line $token = ""; then move the file to a directory served by your webserver
-The WeatherUnderground token and such are optional so you can remove everything related if you don't plan on using it. I mainly put that in there for personal use and to show an example of how to add things more complex than simple responses.
+This is a simple groupme bot I made that works in php
+
+First, you need to go to https://dev.groupme.com/bots and register a bot there, you should be asked for a callback url, the callback url is the url where the bot.php will be sitting.  An example is https://yout.website/bot/bot.php
+
+I recommend running each instance of this bot in it's own subdirectory as it will be using it's own config, response, and admin file and its own loggig file and directory.
+
+By default, logs will be made under /logs/ so you can restrict access to this directory through your webserver (This way people cant read your chat history if they find the directory)
+
+Once you have your bot registered, edit config.php to add your bot token, if you have a weatherunderground token add it too, if you don't, move on.
+
+I have made a few basic responses in the responses.php file, edit, add or remove them to fit your specs.
+If you already have the bot in the appropriate place for groupme callback, you can use the commands /addresponse "catch" "respond" in the chat the bot is in to add a response
+You can also use  /delresponse "catch" to delete a response if you want.  
+
+For these commands to work, you must have your ID in the admins.php file.  You can find your id by sending a message and reading the log, it will contain your ID next to your name.
 
 
-To get a bot go here https://dev.groupme.com/bots
+When writing responses through the commands or by editing the responses.php file, you can use things like $name or $id to be put in the response.  You can code in the ability to have custom responses for different users pretty easily.
 
-The Bot ID is your token and you should make the callback url the full URL where the php file is served
-After that, just say test or abc to see if it works.  I have only tested this in Debian 9 with Apache and cannot guarantee it works with any other platform.
-Some php functions may be disabled if you are on a vps or a plain webhost.  I have only tested this running on my own personal server
+An example of doing this would be to add a block like this:
 
-I cannot guarantee the safety of using this bot on your system but I have tried making escape sequences in both my name and message to break the bot or escape the shell and read files with no success.
+if ($name == "dave" && $text == "hey") {
+	send("You aren't welcome here, dave", null, null);
+}
+
+It is bad practice to do authentication by name but its fine to do responses by name because someone can change their name to get a response but you don't want them copying your name to get admin commands
