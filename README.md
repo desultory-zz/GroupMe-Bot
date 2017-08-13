@@ -13,7 +13,10 @@ If you already have the bot in the appropriate place for groupme callback, you c
 You can also use  /delresponse "catch" to delete a response if you want.  
 
 For these commands to work, you must have your ID in the admins.php file.  You can find your id by sending a message and reading the log, it will contain your ID next to your name.
-
+Admin commands are as follows:
+/admins lists current user IDs with admin status
+/addadmin "userid" adds an admin to the admins file
+/deladmin "userid" removes an admin from the admins file
 
 When writing responses through the commands or by editing the responses.php file, you can use things like $name or $id to be put in the response.  You can code in the ability to have custom responses for different users pretty easily.
 
