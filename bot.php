@@ -1,75 +1,192 @@
 <?php
-//Set this to the token/bot ID of your bot, ex: 1252346142346243 or whatever your code is
-$token = "";
-//Set this to your Weather Underground API token, ex: 42362362362 or whatever your code is
-$wunderground = "";
-//Wunderground location string in format "STATEABBREVIATION/CITY_NAME", ex: TX/College_Staion
-$location = "";
-//Set this to 1 to make a chat log under specified dir
-$log = 1;
-//Name for log file
-$logfile = "log";
-//Directory for logs, add slash at beginning for absolute path, there must be a slash at the end
-$logdir = "logs/";
-//chmod settings for dir
-$logdirchmod = 0777;
+//Includes
+include 'config.php';
+include 'admins.php';
+include 'responses.php';
 //The following lines get the message info from groupme's post to this url and put them into variables
 $data = json_decode(file_get_contents('php://input'));
 $name = $data->name;
 $text = $data->text;
-$type = $data->sender_type;
-$id = $data->sender_id;
-//Responses in the format of "array('phrase to look for', "response phrase"),
-$responses = array(
-	array('test', "It works!"),
-	array('abc', "123")
-);
-//Checks to see if the type is a user and only handles messages from users to prevent infinite loops
-if ($type == "user" ) {
-	//Basic response function
+$sender_type = $data->sender_type;
+$sender_id = $data->sender_id;
+//Logging
+if ($log == 1) {
+	//Checks to make sure logging dir exists
+        if (!is_dir($logdir)) {
+		//Makes the logging dir if it doesn't exist and sets it to the specified chmod
+                mkdir($logdir, $logdirchmod);
+        }
+	//Puts the message in log file in format "Sender ID(Name) : Message"
+	file_put_contents($logdir.$logfile, "$sender_id($name) : $text \n", FILE_APPEND | LOCK_EX);
+}
+//Checks to see if the type is a user and only handles messages from users to prevent infinite loops, also doesn't respond to commands
+if ($sender_type == "user" && $text[0] !== "/") {
+	basic_response($text, $responses);
+	//Checks to see if text contains weather and WU variables are set before calling the weather reaponse fucntion
+	if (stripos($text, "weather") !== FALSE) {
+		if (isset($wutoken) && isset($wulocation)) {
+			weather_response($wutoken, $wulocation);
+		}
+	}
+}
+//commands function, first checks to see if a message contains a / at the beginning
+if ($text[0] == "/" && in_array($sender_id,$admins)) {
+	//Initialezes message as null
+	$message = null;
+	//Splits the input contained in quotes into elements of array "commands"
+	preg_match_all('`"([^"]*)"`', escapeshellcmd($text), $command);
+	if ($text == "/help") {
+		//Help message
+		$message = '
+		/responses lists current respones, 
+		/addresponse makes a new response in the format "/addresponse "phrase" "response"" 
+		/delresponse deletes a reaponse in the format "/delresponse "phrase"" 
+		/editresponse edits a response in the format "/editresponse "phrase" "response"" 
+		';
+	} else if ($text == "/responses") {
+		//Goes through the array of responses and puts each set on one line
+		foreach($responses as $val) {
+			$message .= "$val[0] -> $val[1]\n";
+		}
+	} else if (strpos($text, '/addresponse') !== FALSE) {
+		//Checks to see if the arguments are set correctly before continuing
+		if (isset($command[1][0]) && $command[1][0] !== "" && isset($command[1][1]) && $command[1][1] !== "" && !isset($command[1][2])) {
+			//Checks to see if that response is already in the responses file first
+			if (search_array($command[1][0], $responses)) {
+				$message = 'There is already a response for that phrase or a response that contains that phrase';
+			} else {
+				//Creates and formats the new response
+				$newresponse = '['.$command[0][0].', '.$command[0][1].'],';
+				//Adds the new response to the responses file
+				file_put_contents('responses.php',str_replace('$responses = [', "\$responses = [\n\t$newresponse", file_get_contents('responses.php')));
+				$message = 'Added response '.$command[0][0].' -> '.$command[0][1];
+			}
+		} else {
+			$message = 'Invalid input';
+		}
+	} else if (strpos($text, '/delresponse') !== FALSE) {
+		//Checks to see if the arguements are set correctly
+		if (isset($command[1][0]) && $command[1][0] !== "" && !isset($command[1][1])) {
+			//loads current responses by reading the responses.php file
+			$currentresponses = file('responses.php');
+			//Reads each line of the responses file (now in array currentresponses)
+			foreach ($currentresponses as $linenumber => $line) {
+				//Checks to see if the line contains the response that is being deleted
+				if (strpos($line, $command[0][0]) !== FALSE) {
+					//Once that response is found, loads the contents of the responses file into new variable newresponses
+					$newresponses = file_get_contents('responses.php');
+					//Deletes appropriate line
+					$newresponses = str_replace($line, '', $newresponses);
+					//Writes the modified version back to the responses.php file
+					file_put_contents('responses.php', $newresponses);
+					$message = 'Deleted response for '.$command[0][0];
+				}
+			}
+		} else {
+			$message = 'Invalid input';
+		}
+	} else if (strpos($text, '/editresponse') !== FALSE) {
+		//Checks to see if the arguments are set correctly
+		if (isset($command[1][0]) && $command[1][0] !== "" && isset($command[1][1]) && $command[1][1] !== "" && !isset($command[1][2])) {
+			//Checks to see if that response is already in the responses file first
+			if (search_array($command[1][0], $responses)) {
+				//If the response is found in the responses file, reads it into array currentresponses
+				$currentresponses = file('responses.php');
+				//Reads responses.php file line by line
+				foreach ($currentresponses as $linenumber => $line) {
+					//Finds the line containing the response to be modified
+					if (strpos($line, $command[0][0]) !== FALSE) {
+						//Once the response is found, loads the contents of the responses file into new variable newresponses
+						$newresponses = file_get_contents('responses.php');
+						//Replaces the line with a new line containing the appropriate response information
+						$newresponses = str_replace($line, "\t[".$command[0][0].', '.$command[0][1]."],\n", $newresponses);
+						//Writes the modified version back to the responses.php file
+						file_put_contents('responses.php', $newresponses);
+						$message = 'Edited response '.$command[0][0].' -> '.$command[0][1];
+					}
+				}
+			} else {
+				$message = 'That phrase does not have a response to edit';
+			}
+		} else {
+			$message = 'Invalid input';
+		}
+	} else {
+		$message = 'Command not found';
+	}
+	send($message, null, null);
+}
+
+
+
+//Send function, token should be the groupme bot token
+//Message is the message you want to send
+//attachments should be the attachments you want to send, this should be a string if it's a url and an array where the 0 element is the user id and the 1 element is the location of the username in format [start,end]
+//attachmenttype should be 'image' or 'mentions
+function send($message, $attachments, $attachmenttype) {
+	include 'config.php';
+	//Sets the basic postdata arguments
+	$postdata = [
+		'bot_id' => $token,
+		'text' => $message,
+	];
+	//This is only run if there are attachments
+	if (isset($attachments)) {
+		//Sets the attachment type to image and sets the url to the $attachments argument
+		if ($attachmenttype == 'image') {
+			$attachments = [
+				'type' => 'image',
+				'url' => $attachments
+			];
+		} else if ($attachmenttype == 'mentions') {
+			//Sets the attachments type to mentions and adds the user id's and location
+			$attachments = [
+				'type' => 'mentions',
+				'user_ids' => $attachments[0],
+				'loci' => attachments[1]
+			];
+		}
+		//Adds the attachments element to the postdata and then adds the attachments to that element
+		$postdata['attachments'] = [$attachments];
+	}
+	//Encodes the postdata in json format then adds single quotes around it
+	$postdata = escapeshellarg(json_encode($postdata));
+	`curl -s -X POST -d $postdata -H 'Content-Type: application/json' https://api.groupme.com/v3/bots/post`;
+}
+//This function is used for the commands ability, it is designed to simply read the first element of each element in an array and check to see if that is equal to the supplied needle
+function search_array($needle, $haystack) {
+	$exists = 0;
+	foreach ($haystack as $element) {
+		if (stripos($needle, $element[0]) !== FALSE) {
+			$exists = 1;
+		}
+	}
+	return $exists;
+}
+//Basic response function
+function basic_response($text, $responses) {
 	$element = 0;
 	//Goes through responses array
 	foreach ($responses as $catch) {
 		//Finds if a phrase you are looking for is in the text to a message
 		if (stripos($text, $catch[0]) !== FALSE) {
 			//If a phrase you have set is found, this sets the message to be the appropriate response
-			//Makes the appropriate post data in json format for groupme
-			$postdata = escapeshellarg(json_encode(array(
-				'bot_id' => $token,
-				'text' => $responses[$element][1]
-			)));
-			`curl -s -X POST -d $postdata -H 'Content-Type: application/json' https://api.groupme.com/v3/bots/post`;
+			$message = $responses[$element][1];
+			send($message, null, null);
 		}
-		//Increments element
 		$element++;
 	}
-	//Weather function
-	if (stripos($text, "weather") !== FALSE) {
-        	//Gets the conditions for your area
-		$rawweather = json_decode(`curl -s http://api.wunderground.com/api/$wunderground/conditions/q/$location.json`);
-		//makes variables for condition information
-		$temp = $rawweather->current_observation->feelslike_string;
-		$weather = $rawweather->current_observation->weather;
-		$icon = $rawweather->current_observation->icon_url;
-		//Compiles this information into a post for the forecast
-		$forecast = "The weather is $weather with a temperature of $temp";
-		//Encodes the forecast into json and adds the token and the weather icon
-		$postdata = escapeshellarg(json_encode(array(
-			'bot_id' => $token,
-			'text' => $forecast,
-			'attachments' => [ array(
-				'type' => 'image',
-				'url' => $icon
-			)]
-		)));
-		`curl -s -X POST -d $postdata -H 'Content-Type: application/json' https://api.groupme.com/v3/bots/post`;
-	}
 }
-//Logging function
-if ($log == 1) {
-	if (is_dir($logdir)) {
-		file_put_contents($logdir.$logfile, "$name : $text \n", FILE_APPEND | LOCK_EX);
-	} else {
-		mkdir($logdir, $logdirchmod);
-	}
+//Weather function
+function weather_response($token, $location) {
+	//Gets the conditions for your area
+	$rawweather = json_decode(`curl -s http://api.wunderground.com/api/$token/conditions/q/$location.json`);
+	//makes variables for condition information
+	$temperature = $rawweather->current_observation->feelslike_string;
+	$weather = $rawweather->current_observation->weather;
+	$icon = $rawweather->current_observation->icon_url;
+	//Compiles this information into a post for the forecast
+	$forecast = "The weather is $weather with a temperature of $temperature";
+	//Encodes the forecast into json and adds the token and the weather icon
+	send($forecast, $icon, 'image');
 }
