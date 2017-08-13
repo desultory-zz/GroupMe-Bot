@@ -24,3 +24,8 @@ if ($name == "dave" && $text == "hey") {
 }
 
 It is bad practice to do authentication by name but its fine to do responses by name because someone can change their name to get a response but you don't want them copying your name to get admin commands
+
+
+I have only tested this with Debian 9, Apache2, and PHP 7.0.  I cannot guarantee that it runs on any other system but it should.
+Some php functions used may not work on a VPS, Webhost, or server slot.  I have only tested them on a virual machine in ESXi.
+I cannot guarantee the security of this bot, I have tested some escape sequences but I cannot guarantee that someone in your groupme won't be able to get root access on your system using this bot.  The good news is that if they do, you'll see them doing it in the chat.
