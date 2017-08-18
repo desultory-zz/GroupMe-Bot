@@ -1,4 +1,2 @@
 <?php
-$admins = [
-	"youruserid"
-];
+["youruserid"]
