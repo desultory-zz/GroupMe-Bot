@@ -42,7 +42,7 @@ function weather_response($text) {
 function curl_post($postfields) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, 'https://api.groupme.com/v3/bots/post');
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
 	curl_exec($ch);
 	curl_close($ch);
 }
