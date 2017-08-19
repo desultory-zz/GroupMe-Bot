@@ -19,6 +19,9 @@ if ($type == 'user') {
 		basic_response($text, $name, $userid);
 		//If the Weather Underground API token and location are set, this will return a forecast if someone says "weather"
 		weather_response($text);
+		//If anyone says "ethereum" this will return the price in USD and BTC
+		btc_response($text);
+		eth_response($text);
 	} elseif (in_array($userid, $admins)) {
 		//Parses command arguments into array commands
 		$command = parse_cmd($text);

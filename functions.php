@@ -39,10 +39,31 @@ function weather_response($text) {
 	}
 }
 
+function btc_response($text) {
+	if (stripos($text, 'bitcoin') !== FALSE) {
+		$pricedata = json_decode(file_get_contents("https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"));
+		$usdprice = $pricedata->USD;
+		$message = "Bitcoin is worth \$$usdprice";
+		$ethlogo = 'https://www.worldcoinindex.com/Content/img/coins/v-636096405580774340/Bitcoin.png';
+		send_img($message, $ethlogo);
+	}
+}
+
+function eth_response($text) {
+	if (stripos($text, 'ethereum') !== FALSE) {
+		$pricedata = json_decode(file_get_contents("https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD"));
+		$usdprice = $pricedata->USD;
+		$btcprice = $pricedata->BTC;
+		$message = "Ethereum is worth \$$usdprice and $btcprice Bitcoin";
+		$ethlogo = 'https://files.coinmarketcap.com/static/img/coins/32x32/ethereum.png';
+		send_img($message, $ethlogo);
+	}
+}
+
 function curl_post($postfields) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, 'https://api.groupme.com/v3/bots/post');
-	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
 	curl_exec($ch);
 	curl_close($ch);
 }
@@ -53,7 +74,7 @@ function send($message) {
 		'bot_id' => $bottoken,
 		'text' => $message
 	];
-	curl_post($postdata);
+	curl_post(http_build_query($postdata));
 }
 
 function send_img($message, $image) {
@@ -67,7 +88,7 @@ function send_img($message, $image) {
 		'text' => $message,
 		'attachments' => [$attachments]
 	];
-	curl_post($postdata);
+	curl_post(json_encode($postdata));
 }
 
 function store_array($array, $file) {
