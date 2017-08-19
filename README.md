@@ -8,6 +8,8 @@ By default, logs will be made under /logs/ so you can restrict access to this di
 
 Once you have your bot registered, edit config.php to add your bot token, if you have a weatherunderground token add it too, if you don't, move on.
 You will also need to add your GroupMe API token to use the admin commands because it checks to see if a given user ID is associated with a group member before adding it 
+By default, I have added support for a function that displays the current value of Ethereum or Bitcoin when you say either word.  
+This shows ETH's value in USD and BTC and BTC's value in USD.
 
 I have made a few basic responses in the responses.php file, edit, add or remove them to fit your specs.
 If you already have the bot in the appropriate place for groupme callback, you can use the commands /addresponse -"catch" -"respond" in the chat the bot is in to add a response
