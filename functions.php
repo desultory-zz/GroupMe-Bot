@@ -127,13 +127,10 @@ function get_name($userid) {
 }
 
 function parse_cmd($command) {
-	$command = explode('-"', $command);
+	$command = explode(' -"', $command);
 	array_splice($command, 0, 1);
-	if (count($command) > 1) {
-		$command[0] = substr($command[0], 0, strlen($command[0]) -2);
-		$command[1] = substr($command[1], 0, strlen($command[1]) -1);
-	} elseif (count($command) == 1) {
-		$command[0] = substr($command[0], 0, strlen($command[0]) -1);
+	foreach($command as &$element) {
+		$element = substr($element, 0, strlen($element) -1);
 	}
 	return $command;
 }
