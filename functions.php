@@ -159,6 +159,9 @@ function parse_cmd($command) {
 function disp_help() {
 	$help = <<<'EOHELP'
 		'/help' displays this message
+		'/ignorelist' lists all users who are being ignored
+		'/ignore -"userid"' ignores all messages from specified user
+		'/unignore -"userid"' removed ignore on specified user
 		'/responses' displays all current responses
 		'/addresponse -"find" -"respond"' adds a response to the "find" phrase %n = name, %u = userid
 		'/delresponse -"find"' deletes a response for phrase "find"
@@ -168,6 +171,49 @@ function disp_help() {
 		'/deladmin -"userid" adds the specified user ID to the admin list
 EOHELP;
 	send($help);
+}
+
+
+function list_ignored() {
+	$message = null;
+	$ignored = read_array('ignore.php');
+	foreach($ignored as $element) {
+		$name = get_name($element);
+		$message .= "$element($name)\n";
+	}
+	send($message);
+}
+
+function add_ignore($userid) {
+	$ignored = read_array('ignore.php');
+	$message = "Something bad happened :(";
+	$name = get_name($userid);
+	if (!in_array($userid, $ignored)) {
+		if ($name !== 'Invalid userid') {
+			$ignored[count($ignored)] = $userid;
+			store_array($ignored, 'ignore.php');
+			$message = "$userid($name) has beed added to the ignore list";
+		} else {
+			$message = "No member associated with User ID \"$userid\" is in the group";
+		}
+	} else {
+		$message = "$userid($name) is already being ignored";
+	}
+	return $message;
+}
+
+function del_ignore($userid) {
+	$ignored = read_array('ignore.php');
+	$message = "Something bad happened :(";
+	$name = get_name($userid);
+	if (in_array($userid, $ignored)) {
+		array_splice($ignored, array_search($userid, $ignored), 1);
+		$message = "$userid($name) was removed from the ignore list";
+		store_array($ignored, 'ignore.php');
+	} else {
+		$message = "$userid($name) is not being ignored";
+	}
+	return $message;
 }
 
 function list_responses() {

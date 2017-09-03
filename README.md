@@ -38,3 +38,5 @@ I cannot guarantee the security of this bot, I have tested some escape sequences
 
 
 You need php-curl for this to work, to get that on debian do apt install php-curl. EZ.
+
+You can also ignore people who dont like the bot by doing /ignore -"userid" and remove them by doing /unignore -"userid"

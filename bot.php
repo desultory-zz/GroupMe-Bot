@@ -11,7 +11,8 @@ $userid = $callback->user_id;
 //If logging is enables in the config, this logs the chat to specified file and directory
 logging($userid, $name, $text);
 //Only handles messages from users to prevent infinite loops
-if ($type == 'user') {
+$ignored = read_array('ignore.php');
+if ($type == 'user' && !in_array($userid, $ignored)) {
 	//Reads the admins array for authentication when running commands
 	$admins = read_array('admins.php');
 	if ($text[0] !== '/') {
@@ -27,6 +28,12 @@ if ($type == 'user') {
 		$command = parse_cmd($text);
 		if ($text == '/help') {
 			disp_help();
+		} elseif ($text == '/ignorelist') {
+			list_ignored();
+		} elseif (strpos($text, '/ignore') !== FALSE && isset($command[0])) {
+			send(add_ignore($command[0]));
+		} elseif (strpos($text, '/unignore') !== FALSE && isset($command[0])) {
+			send(del_ignore($command[0]));
 		} elseif ($text == '/responses') {
 			list_responses();
 		} elseif (strpos($text, '/addresponse') !== FALSE && isset($command[0]) && isset($command[1])) {
