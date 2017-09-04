@@ -10,11 +10,11 @@ $text = $callback->text;
 $userid = $callback->user_id;
 //If logging is enables in the config, this logs the chat to specified file and directory
 logging($userid, $name, $text);
-//Only handles messages from users to prevent infinite loops
+//Reads the admins array for authentication when running commands
+$admins = read_array('admins.php');
 $ignored = read_array('ignore.php');
+//Only handles messages from users to prevent infinite loops
 if ($type == 'user' && !in_array($userid, $ignored)) {
-	//Reads the admins array for authentication when running commands
-	$admins = read_array('admins.php');
 	if ($text[0] !== '/') {
 		//Basic response is a simple response to a found phrase
 		basic_response($text, $name, $userid);
