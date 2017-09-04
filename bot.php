@@ -23,33 +23,35 @@ if ($type == 'user' && !in_array($userid, $ignored)) {
 		//If anyone says "ethereum" this will return the price in USD and BTC
 		btc_response($text);
 		eth_response($text);
-	} elseif (in_array($userid, $admins)) {
-		//Parses command arguments into array commands
-		$command = parse_cmd($text);
-		if ($text == '/help') {
-			disp_help();
-		} elseif ($text == '/ignorelist') {
-			list_ignored();
-		} elseif (strpos($text, '/ignore') !== FALSE && isset($command[0])) {
-			send(add_ignore($command[0]));
-		} elseif (strpos($text, '/unignore') !== FALSE && isset($command[0])) {
-			send(del_ignore($command[0]));
-		} elseif ($text == '/responses') {
-			list_responses();
-		} elseif (strpos($text, '/addresponse') !== FALSE && isset($command[0]) && isset($command[1])) {
-			send(add_response($command[0], $command[1]));
-		} elseif (strpos($text, '/delresponse') !== FALSE && isset($command[0])) {
-			send(del_response($command[0]));
-		} elseif ($text == '/admins') {
-			list_admins();
-		} elseif (strpos($text, '/getuserid') !== FALSE && isset($command[0])) {
-			send("$command[0]'s User ID is " . get_user_id($command[0]));
-		} elseif (strpos($text, '/addadmin') !== FALSE && isset($command[0])) {
-			send(add_admin($command[0]));
-		} elseif (strpos($text, '/deladmin') !== FALSE && isset($command[0])) {
-			send(del_admin($command[0]));
-		} else {
-			send('Invalid Command');
-		}
 	}
 }
+if (in_array($userid, $admins)) {
+	//Parses command arguments into array commands
+	$command = parse_cmd($text);
+	if ($text == '/help') {
+		disp_help();
+	} elseif ($text == '/ignorelist') {
+		list_ignored();
+	} elseif (strpos($text, '/ignore') !== FALSE && isset($command[0])) {
+		send(add_ignore($command[0]));
+	} elseif (strpos($text, '/unignore') !== FALSE && isset($command[0])) {
+		send(del_ignore($command[0]));
+	} elseif ($text == '/responses') {
+		list_responses();
+	} elseif (strpos($text, '/addresponse') !== FALSE && isset($command[0]) && isset($command[1])) {
+		send(add_response($command[0], $command[1]));
+	} elseif (strpos($text, '/delresponse') !== FALSE && isset($command[0])) {
+		send(del_response($command[0]));
+	} elseif ($text == '/admins') {
+		list_admins();
+	} elseif (strpos($text, '/getuserid') !== FALSE && isset($command[0])) {
+		send("$command[0]'s User ID is " . get_user_id($command[0]));
+	} elseif (strpos($text, '/addadmin') !== FALSE && isset($command[0])) {
+		send(add_admin($command[0]));
+	} elseif (strpos($text, '/deladmin') !== FALSE && isset($command[0])) {
+		send(del_admin($command[0]));
+	} else {
+		send('Invalid Command');
+	}
+}
+
