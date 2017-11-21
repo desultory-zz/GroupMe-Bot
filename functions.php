@@ -99,7 +99,7 @@ function store_array($array, $file) {
 function read_array($file) {
 	$array = file_get_contents($file);
 	$array = str_replace('<?php', null, $array);
-	$array = json_decode($array);
+	$array = json_decode($array, true);
 	return $array;
 }
 
@@ -169,6 +169,9 @@ function disp_help() {
 		'/getuserid -"name"' displays user id of a member of the group
 		'/addadmin -"userid" adds the specified user ID to the admin list
 		'/deladmin -"userid" adds the specified user ID to the admin list
+		'/enable -"(weather|btc|eth)"' enables a custom response
+		'/disable -"(weather|btc|eth)"' disables a custom response
+		'/status' lists all settings and their current status
 EOHELP;
 	send($help);
 }
@@ -304,4 +307,39 @@ function del_admin($userid) {
 		$message = "$userid($name) is not an admin";
 	}
 	return $message;
+}
+
+function enable_custom($setting) {
+	$settings = read_array('settings.php');
+	$message = "Something bad happened :(";
+	if ($settings[$setting] == 1) {
+		$message = "Already enabled, no changes made";
+	} else {
+		$settings[$setting] = 1;
+		$message = "Response enabled";
+		store_array($settings, 'settings.php');
+	}
+	return $message;
+}
+
+function disable_custom($setting) {
+	$settings = read_array('settings.php');
+	$message = "Something bad happened :(";
+	if ($settings[$setting] == 0) {
+		$message = "Already disabled, no changes made";
+	} else {
+		$settings[$setting] = 0;
+		$message = "Response disabled";
+		store_array($settings, 'settings.php');
+	}
+	return $message;
+}
+
+function list_status($setting) {
+	$message = null;
+	$settings = read_array('settings.php');
+	foreach($settings as $setting => $state) {
+		$message .= "$setting -> $state\n";
+	}
+	send($message);
 }

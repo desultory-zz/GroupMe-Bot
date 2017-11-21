@@ -20,6 +20,15 @@ Admin commands are as follows:
 /admins lists current user IDs with admin status
 /addadmin -"userid" adds an admin to the admins file
 /deladmin -"userid" removes an admin from the admins file
+/ignore -"userid" ignores a specifc user so they will not trigger the bot
+/unignore -"userid" removes an ignore
+/responses lists all resposnes
+/addresponse -"find" -"response" responds with a response every time it finds a certain string
+/delresponse -"find" deletes a response
+/getuserid -"name" finds someones userID using the groupme api
+/enable -"(weather|btc|eth)" enables the special responses for weather, bitcoin, or ethereum
+/disable -"(weather|btc|eth)" disables the special responses for weather, bitcoin, or ethereum
+/status displays the special response status for all special responses
 
 When writing responses through the commands or by editing the responses.php file, you can use things like $name or $id to be put in the response.  You can code in the ability to have custom responses for different users pretty easily.
 

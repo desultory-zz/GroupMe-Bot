@@ -8,25 +8,33 @@ $name = $callback->name;
 $type = $callback->sender_type;
 $text = $callback->text;
 $userid = $callback->user_id;
-//If logging is enables in the config, this logs the chat to specified file and directory
-logging($userid, $name, $text);
-//Reads the admins array for authentication when running commands
+
 $admins = read_array('admins.php');
 $ignored = read_array('ignore.php');
+$settings = read_Array('settings.php');
+
+//If logging is enables in the config, this logs the chat to specified file and directory
+logging($userid, $name, $text);
+
 //Only handles messages from users to prevent infinite loops
-if ($type == 'user' && !in_array($userid, $ignored)) {
-	if ($text[0] !== '/') {
-		//Basic response is a simple response to a found phrase
-		basic_response($text, $name, $userid);
-		//If the Weather Underground API token and location are set, this will return a forecast if someone says "weather"
+if ($type == 'user' && !in_array($userid, $ignored) && $text[0] != '/') {
+	//Basic response is a simple response to a found phrase
+	basic_response($text, $name, $userid);
+	//If the Weather Underground API token and location are set and weather has been enabled, this will return a forecast if someone says "weather"
+	if ($settings['weather']) {
 		weather_response($text);
-		//If anyone says "ethereum" this will return the price in USD and BTC
+	}
+	//If anyone says "bitcoin" and the bitcoin setting is enabled, this will return the price in USD
+	if ($settings['bitcoin']) {
 		btc_response($text);
+	}
+	//If anyone says "ethereum" and the ethereum setting is enabled, this will return the price in USD and BTC
+	if ($settings['ethereum']) {
 		eth_response($text);
 	}
 }
-if (in_array($userid, $admins)) {
-	//Parses command arguments into array commands
+
+if (in_array($userid, $admins) && $type == 'user' && $text[0] == '/') {
 	$command = parse_cmd($text);
 	if ($text == '/help') {
 		disp_help();
@@ -50,8 +58,13 @@ if (in_array($userid, $admins)) {
 		send(add_admin($command[0]));
 	} elseif (strpos($text, '/deladmin') !== FALSE && isset($command[0])) {
 		send(del_admin($command[0]));
+	} elseif (strpos($text, '/enable') !== FALSE && isset($command[0])) {
+		send(enable_custom($command[0]));
+	} elseif (strpos($text, '/disable') !== FALSE && isset($command[0])) {
+		send(disable_custom($command[0]));
+	} elseif ($text == '/status') {
+		list_status();
 	} else {
 		send('Invalid Command');
 	}
 }
-
