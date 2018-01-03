@@ -1,6 +1,8 @@
 <?php
 //Includes all functions and parses the post data into appropriate variables
 include 'functions.php';
+include 'lights.php';
+
 $callback = json_decode(file_get_contents('php://input'));
 $attachments = $callback->attachments;
 $avatar = $callback->avatar_url;
@@ -11,7 +13,7 @@ $userid = $callback->user_id;
 
 $admins = read_array('admins.php');
 $ignored = read_array('ignore.php');
-$settings = read_Array('settings.php');
+$settings = read_array('settings.php');
 
 //If logging is enables in the config, this logs the chat to specified file and directory
 logging($userid, $name, $text);
@@ -32,8 +34,14 @@ if ($type == 'user' && !in_array($userid, $ignored) && $text[0] != '/') {
 	if ($settings['ethereum']) {
 		eth_response($text);
 	}
+	//If anyone says "litecoin" and the litecoin setting is enabled, this will return the price in USD and BTC
+	if ($settings['litecoin']) {
+		ltc_response($text);
+	}
+	if ($settings['lights']) {
+		blink($ip, $pins, "50", "20");
+	}
 }
-
 if (in_array($userid, $admins) && $type == 'user' && $text[0] == '/') {
 	$command = parse_cmd($text);
 	if ($text == '/help') {
@@ -64,6 +72,10 @@ if (in_array($userid, $admins) && $type == 'user' && $text[0] == '/') {
 		send(disable_custom($command[0]));
 	} elseif ($text == '/status') {
 		list_status();
+	} elseif ($text == '/lightson') {
+		lights_on($ip, $pins);
+	} elseif ($text == '/lightsoff') {
+		lights_off($ip, $pins);
 	} else {
 		send('Invalid Command');
 	}
