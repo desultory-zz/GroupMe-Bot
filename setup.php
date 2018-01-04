@@ -32,7 +32,7 @@ if (!empty($_POST)) {
 		if (!empty($_POST['logchmod'])) {
 			$config .= "\$logdirchmod = " . $_POST['logchmod'] . ";\n";
 		} else {
-			$config .= "\$logdirchmod = '0755';\n";
+			$config .= "\$logdirchmod = '0755';";
 		}
 	} else {
 		$error = 1;
@@ -40,12 +40,17 @@ if (!empty($_POST)) {
 	}
 	if (!$error) {
 		$me = json_decode(file_get_contents("https://api.groupme.com/v3/users/me?token=$apitoken"));
-		echo var_dump($me);
 		$id = $me->response->id;
 		$admins = "<?php\n[\"$id\"]";
-		file_put_contents('admins.php', $admins);
-		file_put_contents('ignore.php', "<?php\n[]");
-		file_put_contents('responses.php', "<?php\n[[\"test\",\"It works!\"]]");
+		if (!file_exists('admins.php')) {
+			file_put_contents('admins.php', $admins);
+		}
+		if (!file_exists('ignore.php')) {
+			file_put_contents('ignore.php', "<?php\n[]");
+		}
+		if (!file_exists('responses.php')) {
+			file_put_contents('responses.php', "<?php\n[[\"test\",\"It works!\"]]");
+		}
 		file_put_contents('config.php', $config);
 		sleep(1);
 		header("Refresh:0");
