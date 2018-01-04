@@ -163,6 +163,13 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 			if (!file_exists('responses.php')) {
 				file_put_contents('responses.php', "<?php\n[[\"test\",\"It works!\"]]");
 			}
+			if (!file_exists('settings.php')) {
+				if (isset($wutoken) && isset($wuloc)) {
+					file_put_contents('settings.php', "<?php\n{\"weather\":1,\"bitcoin\":1,\"ethereum\":1,\"litecoin\":1,\"lights\":0}");
+				} else {
+					file_put_contents('settings.php', "<?php\n{\"weather\":0,\"bitcoin\":1,\"ethereum\":1,\"litecoin\":1,\"lights\":0}");
+				}
+			}
 			file_put_contents('config.php', $config);
 			sleep(1);
 			header("Refresh:0");
