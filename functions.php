@@ -29,7 +29,7 @@ function weather_response($text) {
 	include 'config.php';
 	if (stripos($text, 'weather') !== FALSE) {
 		if (isset($wutoken) && isset($wuloc)) {
-			$rawweather = json_decode(file_get_contents("https://api.wunderground.com/api/$wutoken/conditions/q/$wuloc.json"));
+			$rawweather = json_decode(curl_get("https://api.wunderground.com/api/$wutoken/conditions/q/$wuloc.json"));
 			$temperature = $rawweather->current_observation->feelslike_string;
 			$weather = $rawweather->current_observation->weather;
 			$icon = $rawweather->current_observation->icon_url;
@@ -43,7 +43,7 @@ function weather_response($text) {
 
 function btc_response($text) {
 	if (stripos($text, 'bitcoin') !== FALSE) {
-		$pricedata = json_decode(file_get_contents("https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"));
+		$pricedata = json_decode(curl_get("https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"));
 		$usdprice = $pricedata->USD;
 		$message = "Bitcoin is worth \$$usdprice";
 		$btclogo = 'https://files.coinmarketcap.com/static/img/coins/32x32/bitcoin.png';
@@ -53,7 +53,7 @@ function btc_response($text) {
 
 function eth_response($text) {
 	if (stripos($text, 'ethereum') !== FALSE) {
-		$pricedata = json_decode(file_get_contents("https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD"));
+		$pricedata = json_decode(curl_get("https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD"));
 		$usdprice = $pricedata->USD;
 		$btcprice = $pricedata->BTC;
 		$message = "Ethereum is worth \$$usdprice and $btcprice Bitcoin";
@@ -64,13 +64,22 @@ function eth_response($text) {
 
 function ltc_response($text) {
 	if (stripos($text, 'litecoin') !== FALSE) {
-		$pricedata = json_decode(file_get_contents("https://min-api.cryptocompare.com/data/price?fsym=LTC&tsyms=BTC,USD"));
+		$pricedata = json_decode(curl_get("https://min-api.cryptocompare.com/data/price?fsym=LTC&tsyms=BTC,USD"));
 		$usdprice = $pricedata->USD;
 		$btcprice = $pricedata->BTC;
 		$message = "Litecoin is worth \$$usdprice and $btcprice Bitcoin";
 		$ltclogo = 'https://files.coinmarketcap.com/static/img/coins/32x32/litecoin.png';
 		send_img($message, $ltclogo);
 	}
+}
+
+function curl_get($url) {
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, "$url");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	$get = curl_exec($ch);
+	curl_close($ch);
+	return $get;
 }
 
 function curl_post($postfields) {
@@ -137,7 +146,7 @@ function read_array($file) {
 
 function get_bot_group() {
 	include 'config.php';
-	$bots = json_decode(file_get_contents("https://api.groupme.com/v3/bots?token=$apitoken"));
+	$bots = json_decode(curl_get("https://api.groupme.com/v3/bots?token=$apitoken"));
 	foreach($bots->response as $element) {
 		if ($element->bot_id == $bottoken) {
 			return $element->group_id;
@@ -149,7 +158,7 @@ function get_user_id($name) {
 	include 'config.php';
 	$user_id = 'No member with that name found';
 	$groupid = get_bot_group();
-	$groups = json_decode(file_get_contents("https://api.groupme.com/v3/groups?token=$apitoken"));
+	$groups = json_decode(curl_get("https://api.groupme.com/v3/groups?token=$apitoken"));
 	foreach($groups->response as $element) {
 		if ($element->id == $groupid) {
 			foreach($element->members as $member) {
@@ -166,7 +175,7 @@ function get_name($userid) {
 	include 'config.php';
 	$name = 'Invalid userid';
 	$groupid = get_bot_group();
-	$groups = json_decode(file_get_contents("https://api.groupme.com/v3/groups?token=$apitoken"));
+	$groups = json_decode(curl_get("https://api.groupme.com/v3/groups?token=$apitoken"));
 	foreach($groups->response as $element) {
 		if ($element->id == $groupid) {
 			foreach($element->members as $member) {

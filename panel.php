@@ -47,7 +47,7 @@ if (file_exists('config.php')) {
 	if (isset($_POST['send']) && !empty($_POST['send'])) {
 		send($_POST['send']);
 	}?>
-<title>PHP GroupMe Bot</title>
+	<title>PHP GroupMe Bot</title>
 <style>
 tr:nth-child(even) {
   background-color: #dddddd;
@@ -176,8 +176,6 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 		}
 	}
 ?>
-<html>
-<head>
 	<title>PHP GroupMe Bot Setup</title>
 </head>
 <form name="setup" method="post" action="">
