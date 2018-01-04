@@ -8,7 +8,7 @@ I recommend running each instance of this bot in it's own subdirectory as it wil
 
 By default, logs will be made under /logs/ so you can restrict access to this directory through your webserver (This way people cant read your chat history if they find the directory)
 
-Once you have creted your bot, go to the directory where the bot is running and open "setup.php" in a web browser.  Input your API token and bot token.  Everything else is optional and logging information will be set to the default if you leave it blank.  This script will automatically add you to the admins list.  The config file created will be config.php.  If you want to change anything you can either delet this and re-run the generator script or modify it manually, the variable names should be self explanatory.
+Once you have creted your bot, go to the directory where the bot is running and open "panel.php" in a web browser.  Input your API token and bot token.  Everything else is optional and logging information will be set to the default if you leave it blank.  This script will automatically add you to the admins list.  The config file created will be config.php.  If you want to change anything you can either delete the config.php file and open the panel again or you can edit it manueally.  After the config file is created, the panel will be a way to manage responses, settings, and send messages from the bot.
 
 By default, the bot will only reapond to "test".  You can add and remove responses by going to "panel.php" in a web browser or in the chat by using the commands below.
 
