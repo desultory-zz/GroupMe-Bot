@@ -5,7 +5,7 @@ $apitoken = '';
 $bottoken = '';
 //Set this to your WeatherUnderground API token
 $wutoken = '';
-//Set this to your WeatherUnderground locatio, ex 'TX/COLLEGE_STATION'
+//Set this to your WeatherUnderground location, ex 'TX/COLLEGE_STATION'
 $wuloc = '';
 //Set to true to enable logging
 $log = 'true';

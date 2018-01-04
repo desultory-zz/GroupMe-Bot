@@ -4,8 +4,9 @@ if (isset($_POST['delete'])) {
 	$delete = $_POST['delete'];
 	$responses = read_array('responses.php');
 	foreach ($delete as $element) {
-		array_splice($responses, $element, 1);
+		$responses[$element] = null;
 	}
+	$responses = array_values(array_filter($responses));
 	store_array($responses, 'responses.php');
 }
 if (isset($_POST['find']) && isset($_POST['respond']) && !empty($_POST['find']) && !empty($_POST['respond'])) {
@@ -51,7 +52,7 @@ tr:nth-child(even) {
 }
 </style>
 </head>
-The top form can be used to add a response. %n will append the user's name to the response. %u will append the user's id to the response.
+When adding a response, %n can be used to mention a user by name and %u will be replace by their user id
 <form name="add" method="post" action="">
 	<input type="text" name="find" placeholder="Text to find">
 	<input type="text" name="respond" placeholder="Text to respond with">
@@ -73,7 +74,7 @@ The top form can be used to add a response. %n will append the user's name to th
 		echo "<th>$element[1]</th>";
 		echo "<th><input type=\"checkbox\" name=\"delete[]\" value=\"$iteration\">";
 		echo "</tr>";
-		$iteration = $iteration + 1;
+		$iteration++;
 	}?>
 </table>
 <input type="submit" value="Remove">

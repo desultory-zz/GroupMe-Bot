@@ -1,9 +1,7 @@
 <?php
 function logging($userid, $name, $text) {
 	include 'config.php';
-	//Only runs if logging is set to true
 	if ($log) {
-		//Makes logging directory if it doesnt exits and chmods it
 		if (!is_dir($logdir)) {
 			mkdir($logdir, $logdirchmod);
 		}
@@ -16,9 +14,13 @@ function basic_response($text, $name, $userid) {
 	foreach ($responses as $element) {
 		if (stripos($text, $element[0]) !== FALSE) {
 			$message = $element[1];
-			$message = str_replace('%n', $name, $message);
 			$message = str_replace('%u', $userid, $message);
-			send($message);
+			if (stripos($message, '%n') !== FALSE) {
+				$message = str_replace('%n', $name, $message);
+				mention($message, $name);
+			} else {
+				send($message);
+			}
 		}
 	}
 }
@@ -44,8 +46,8 @@ function btc_response($text) {
 		$pricedata = json_decode(file_get_contents("https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"));
 		$usdprice = $pricedata->USD;
 		$message = "Bitcoin is worth \$$usdprice";
-		$ethlogo = 'https://www.worldcoinindex.com/Content/img/coins/v-636096405580774340/Bitcoin.png';
-		send_img($message, $ethlogo);
+		$btclogo = 'https://files.coinmarketcap.com/static/img/coins/32x32/bitcoin.png';
+		send_img($message, $btclogo);
 	}
 }
 
@@ -57,6 +59,17 @@ function eth_response($text) {
 		$message = "Ethereum is worth \$$usdprice and $btcprice Bitcoin";
 		$ethlogo = 'https://files.coinmarketcap.com/static/img/coins/32x32/ethereum.png';
 		send_img($message, $ethlogo);
+	}
+}
+
+function ltc_response($text) {
+	if (stripos($text, 'litecoin') !== FALSE) {
+		$pricedata = json_decode(file_get_contents("https://min-api.cryptocompare.com/data/price?fsym=LTC&tsyms=BTC,USD"));
+		$usdprice = $pricedata->USD;
+		$btcprice = $pricedata->BTC;
+		$message = "Litecoin is worth \$$usdprice and $btcprice Bitcoin";
+		$ltclogo = 'https://files.coinmarketcap.com/static/img/coins/32x32/litecoin.png';
+		send_img($message, $ltclogo);
 	}
 }
 
@@ -82,6 +95,25 @@ function send_img($message, $image) {
 	$attachments = [
 		'type' => 'image',
 		'url' => $image
+	];
+	$postdata = [
+		'bot_id' => $bottoken,
+		'text' => $message,
+		'attachments' => [$attachments]
+	];
+	curl_post(json_encode($postdata));
+}
+
+function mention($message, $name) {
+	include 'config.php';
+	$loci = [
+		stripos($message, $name),
+		strlen($name)
+	];
+	$attachments = [
+		'loci' => [$loci],
+		'type' => 'mentions',
+		'user_ids' => [get_user_id($name)]
 	];
 	$postdata = [
 		'bot_id' => $bottoken,
