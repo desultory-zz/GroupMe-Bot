@@ -367,7 +367,7 @@ function disable_custom($setting) {
 	return $message;
 }
 
-function list_status($setting) {
+function list_status() {
 	$message = null;
 	$settings = read_array('settings.php');
 	foreach($settings as $setting => $state) {
