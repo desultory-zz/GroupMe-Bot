@@ -227,7 +227,7 @@ function add_ignore($userid) {
 		if ($name !== 'Invalid userid') {
 			$ignored[count($ignored)] = $userid;
 			store_array($ignored, 'ignore.php');
-			$message = "$userid($name) has beed added to the ignore list";
+			$message = "$userid($name) has been added to the ignore list";
 		} else {
 			$message = "No member associated with User ID \"$userid\" is in the group";
 		}
@@ -317,7 +317,7 @@ function add_admin($userid) {
 		if ($name !== 'Invalid userid') {
 			$admins[count($admins)] = $userid;
 			store_array($admins, 'admins.php');
-			$message = "$userid($name) has beed added to the admin list";
+			$message = "$userid($name) has been added to the admin list";
 		} else {
 			$message = "No member associated with User ID \"$userid\" is in the group";
 		}
