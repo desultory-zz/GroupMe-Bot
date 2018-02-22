@@ -101,10 +101,6 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 		<input type="submit" value="update">
 		<input type="hidden" name="users[]" value="1">
 	</form>
-	<form name="send" method="post" action="">
-		<input type="text" name="send" placeholder="Message to send">
-		<input type="submit" value="Send">
-	</form>
 <form name="settings" method="post" action="">
 <table>
 	<tr>
