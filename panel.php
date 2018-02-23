@@ -1,11 +1,53 @@
 <html>
 <head>
+<style>
+table {
+  border-spacing: 0;
+  text-align: center;
+  font-size: 16px;
+}
+th, td {
+  height: 100%;
+  padding: 10px;
+  vertical-align: middle;
+}
+tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.50);
+}
+tr:nth-child(odd) {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+input {
+  width: 100%;
+  height: 100%;
+  border: 0px;
+  color: white;
+  text-indent: 0px;
+  font-size: 16px;
+  background: rgba(0, 0, 0, 0);
+  font-family: "Lucida Console", Monaco, monospace;
+}
+body {
+  background: url("https://picload.org/image/dadcrgpl/background.png");
+  background-repeat: repeat-y;
+  background-size: cover;
+  color: white;
+  margin: auto;
+  left: 0;
+  right: 0;
+  position: absolute;
+  font-size: 16px;
+  text-align: center;
+  font-family: "Lucida Console", Monaco, monospace;}
+</style>
+	<title>PHP GroupMe Bot</title>
+</head>
+<body>
 <?php
 include 'functions.php';
-
 if (file_exists('config.php')) {
 	if (isset($_POST['delete'])) {
-		del_response_bynum($_POST['delete']);
+		del_responses($_POST['delete']);
 	}
 	if (isset($_POST['find']) && isset($_POST['respond']) && !empty($_POST['find']) && !empty($_POST['respond'])) {
 		add_response($_POST['find'], $_POST['respond']);
@@ -34,21 +76,18 @@ if (file_exists('config.php')) {
 	if (isset($_POST['send']) && !empty($_POST['send'])) {
 		send($_POST['send']);
 	}?>
-	<title>PHP GroupMe Bot</title>
-<style>
-tr:nth-child(even) {
-  background-color: #dddddd;
-}
-</style>
-</head>
-When adding a response, %n can be used to mention a user by name and %u will be replace by their user id
+<h3>%n can be used to mention someone in a response</h3>
 <form name="add" method="post" action="">
-	<input type="text" name="find" placeholder="Text to find">
-	<input type="text" name="respond" placeholder="Text to respond with">
-	<input type="submit" value="Add">
+<table align="center">
+	<tr>
+		<th><input type="text" name="find" placeholder="Text to find"></th>
+		<th><input type="text" name="respond" placeholder="Text to respond with"></th>
+		<th><input type="submit" value="Add"></th>
+	</tr>
+</table>
 </form>
 <form name="delete" method="post" action="">
-<table>
+<table align="center">
 	<tr>
 		<th>Find</th>
 		<th>Respond</th>
@@ -59,17 +98,19 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 	$iteration = 0;
 	foreach ($responses as $element) {
 		echo "<tr>";
-		echo "<th>$element[0]</th>";
-		echo "<th>$element[1]</th>";
-		echo "<th><input type=\"checkbox\" name=\"delete[]\" value=\"$iteration\">";
+		echo "<td>$element[0]</td>";
+		echo "<td>$element[1]</td>";
+		echo "<td><input type=\"checkbox\" name=\"delete[]\" value=\"$iteration\"></td>";
 		echo "</tr>";
 		$iteration++;
 	}?>
+	<tr>
+		<th colspan="3"><input type="submit" value="Remove"></th>
+	</tr>
 </table>
-<input type="submit" value="Remove">
 </form>
 <form name="Users" method="post" action="">
-<table>
+<table align="center">
 	<tr>
 		<th>Name</th>
 		<th>Admin</th>
@@ -84,25 +125,27 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 		$userid = $user["userid"];
 		$avatar = $user["avatar"];
 		echo "<tr>";
-		echo "<th>$name ($userid)</th>";
+		echo "<td style=\"text-align: left;\"><img src=\"$avatar\" style=\"width:50px; height:50px; vertical-align: middle;\"> $name ($userid)</td>";
 		if (in_array($userid, $admins)) {
-			echo "<th><input type=\"checkbox\" name=\"admins[$userid]\" value=\"1\" checked>";
+			echo "<td><input type=\"checkbox\" name=\"admins[$userid]\" value=\"1\" checked></td>";
 		} else {
-			echo "<th><input type=\"checkbox\" name=\"admins[$userid]\" value=\"1\">";
+			echo "<td><input type=\"checkbox\" name=\"admins[$userid]\" value=\"1\"></td>";
 		}
 		if (in_array($userid, $ignore)) {
-			echo "<th><input type=\"checkbox\" name=\"ignore[$userid]\" value=\"1\" checked>";
+			echo "<td><input type=\"checkbox\" name=\"ignore[$userid]\" value=\"1\" checked></td>";
 		} else {
-			echo "<th><input type=\"checkbox\" name=\"ignore[$userid]\" value=\"1\">";
+			echo "<td><input type=\"checkbox\" name=\"ignore[$userid]\" value=\"1\"></td>";
 		}
 		echo "</tr>";
 	}?>
-	</table>
-		<input type="submit" value="update">
-		<input type="hidden" name="users[]" value="1">
-	</form>
+	<tr>
+		<th colspan="3"><input type="submit" value="Update"></th>
+	</tr>
+</table>
+	<input type="hidden" name="users[]" value="1">
+</form>
 <form name="settings" method="post" action="">
-<table>
+<table align="center">
 	<tr>
 		<th>Name</th>
 		<th>State</th>
@@ -112,27 +155,34 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 	$settings = read_array('settings.php');
 	foreach ($settings as $key=>$value) {
 		echo "<tr>";
-		echo "<th>$key</th>";
+		echo "<td>$key</td>";
 		if ($value) {
-			echo "<th><input type=\"checkbox\" name=\"setting[$key]\" value=\"1\" checked>";
+			echo "<td><input type=\"checkbox\" name=\"setting[$key]\" value=\"1\" checked></td>";
 		} else {
-			echo "<th><input type=\"checkbox\" name=\"setting[$key]\" value=\"1\">";
+			echo "<td><input type=\"checkbox\" name=\"setting[$key]\" value=\"1\"></td>";
 		}
-		echo "<th><input type=\"checkbox\" name=\"del_setting[$key]\" value=\"1\">";
+		echo "<td><input type=\"checkbox\" name=\"del_setting[$key]\" value=\"1\"></td>";
 		echo "</tr>";
 	}?>
 	<tr>
-		<th>Add setting</th>
-		<th><input type="text" name="new_setting" placeholder="Name for new setting"></th>
+		<td>Add setting</td>
+		<td colspan="2"><input type="text" name="new_setting" placeholder="Name for new setting"></td>
 	</tr>
-	</table>
-		<input type="submit" value="update">
-		<input type="hidden" name="setting[]" value="1">
-	</form>
-	<form name="send" method="post" action="">
-		<input type="text" name="send" placeholder="Message to send">
-		<input type="submit" value="Send">
-	</form><?php
+	<tr>
+		<th colspan="3"><input type="submit" value="Update"></th>
+	</tr>
+</table>
+	<input type="hidden" name="setting[]" value="1">
+</form>
+<form name="send" method="post" action="">
+<table align="center">
+	<tr>
+		<th colspan="3"><input type="text" name="send" placeholder="Message to send"></th>
+	</tr>
+</table>
+		<input type="submit" value="Send" style="display: none">
+</form>
+<?php
 } else if (is_writeable('./')) {
 	if (!empty($_POST)) {
 		$error = 0;
@@ -196,9 +246,9 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 		}
 	}
 ?>
-	<title>PHP GroupMe Bot Setup</title>
-</head>
 <form name="setup" method="post" action="">
+	<input type="text" style="width: 50%;" name="user" placeholder="Panel username"><br>
+	<input type="text" style="width: 50%;" name="pass" placeholder="Panel password"><br>
 	<input type="text" style="width: 50%;" name="apitoken" placeholder="Your GroupMe API token"><br>
 	<input type="text" style="width: 50%;" name="bottoken" placeholder="Your GroupMe bot token"><br>
 	<input type="text" style="width: 50%;" name="wutoken" placeholder="Your WeatherUnderground API token"><br>
@@ -209,4 +259,6 @@ When adding a response, %n can be used to mention a user by name and %u will be 
 <input type="submit" value="generate"><br><?php
 } else {
 	echo "Working directory is not writeable, either chown it to the webserver user and group or allow write permissions to everyone";
-}
+}?>
+</body>
+</html>

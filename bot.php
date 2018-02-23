@@ -42,41 +42,6 @@ if ($type == 'user' && !in_array($userid, $ignored) && $text[0] != '/') {
 		blink($ip, $pins, "50", "20");
 	}
 }
-if (in_array($userid, $admins) && $type == 'user' && $text[0] == '/') {
-	$command = parse_cmd($text);
-	if ($text == '/help') {
-		disp_help();
-	} elseif ($text == '/ignorelist') {
-		list_ignored();
-	} elseif (strpos($text, '/ignore') !== FALSE && isset($command[0])) {
-		send(add_ignore($command[0]));
-	} elseif (strpos($text, '/unignore') !== FALSE && isset($command[0])) {
-		send(del_ignore($command[0]));
-	} elseif ($text == '/responses') {
-		list_responses();
-	} elseif (strpos($text, '/addresponse') !== FALSE && isset($command[0]) && isset($command[1])) {
-		send(add_response($command[0], $command[1]));
-	} elseif (strpos($text, '/delresponse') !== FALSE && isset($command[0])) {
-		send(del_response($command[0]));
-	} elseif ($text == '/admins') {
-		list_admins();
-	} elseif (strpos($text, '/getuserid') !== FALSE && isset($command[0])) {
-		send("$command[0]'s User ID is " . get_user_id($command[0]));
-	} elseif (strpos($text, '/addadmin') !== FALSE && isset($command[0])) {
-		send(add_admin($command[0]));
-	} elseif (strpos($text, '/deladmin') !== FALSE && isset($command[0])) {
-		send(del_admin($command[0]));
-	} elseif (strpos($text, '/enable') !== FALSE && isset($command[0])) {
-		send(enable_custom($command[0]));
-	} elseif (strpos($text, '/disable') !== FALSE && isset($command[0])) {
-		send(disable_custom($command[0]));
-	} elseif ($text == '/status') {
-		list_status();
-	} elseif ($text == '/lightson') {
-		lights_on($ip, $pins);
-	} elseif ($text == '/lightsoff') {
-		lights_off($ip, $pins);
-	} else {
-		send('Invalid Command');
-	}
+if (in_array($userid, $admins) && $type == 'user' && $text == '/config') {
+	send_configurl($userid);
 }
