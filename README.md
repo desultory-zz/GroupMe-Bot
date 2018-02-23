@@ -12,22 +12,7 @@ Once you have creted your bot, go to the directory where the bot is running and 
 
 By default, the bot will only reapond to "test".  You can add and remove responses by going to "panel.php" in a web browser or in the chat by using the commands below.
 
-For these commands to work, your user ID must be in the admins list.  The creator of the bot will be the first admin.
-Admin commands are as follows:
-/help displays information about all commands
-/ignorelist lists all usera that are ignored
-/ignore -"userid" ignores a specifc user so they will not trigger the bot
-/unignore -"userid" removes an ignore
-/responses lists all resposnes
-/addresponse -"find" -"response" responds with a response every time it finds a certain string
-/delresponse -"find" deletes a response
-/admins lists current user IDs with admin status
-/getuserid -"name" finds someones userID using the groupme api
-/addadmin -"userid" adds an admin to the admins file
-/deladmin -"userid" removes an admin from the admins file
-/enable -"(weather|bitcoin|ethereum|litecoin)" enables the special responses for weather, bitcoin, or ethereum
-/disable -"(weather|bitcoin|ethereum|liecoin)" disables the special responses for weather, bitcoin, or ethereum
-/status displays the special response status for all special responses
+All functions of the bot can be configured from panel.php.
 
 You can make the bot mention a user in a response by adding %n to the response and make it list their userid with %u
 
@@ -35,5 +20,3 @@ I have only tested this with Debian 9, Apache2.4, and PHP 7.0.  I cannot guarant
 Some php functions used may not work on a VPS, Webhost, or server slot.  I have only tested them on a virual machine in ESXi.
 I cannot guarantee the security of this bot, I have tested some escape sequences but I cannot guarantee that someone in your groupme won't be able to get root access on your system using this bot.  The good news is that if they do, you'll see them doing it in the chat.
 
-
-You need php-curl for this to work, to get that on debian do apt install php-curl. EZ.
