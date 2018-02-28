@@ -72,6 +72,7 @@ input {
 <?php
 header('Content-type: text/html; charset=utf-8');
 ini_set('display_errors', 1);
+ini_set('session.save_path', getcwd());
 error_reporting(-1);
 include 'functions.php';
 session_start();
@@ -383,7 +384,7 @@ echo "<li>$username Logged in</li>";
 			$statement->bindValue(':value', '1', PDO::PARAM_STR);
 			$statement->execute();
 		}
-		file_put_contents('.htaccess', "<Files \"db.sqlite\">\nDeny From All\n</Files>");
+		file_put_contents('.htaccess', "<Files \"db.sqlite\">\nDeny From All\n</Files>\n<Files \"sess*\">\nDeny From All\n</Files>");
 		header("Refresh:1");
 	}
 disp_setup();

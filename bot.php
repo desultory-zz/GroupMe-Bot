@@ -43,5 +43,4 @@ if ($type == 'user' && !in_array($userid, $ignored) && $text[0] != '/') {
 	}
 }
 if (in_array($userid, $admins) && $type == 'user' && $text == '/config') {
-	send_configurl($userid);
 }
