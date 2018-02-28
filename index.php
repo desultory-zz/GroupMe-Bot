@@ -2,7 +2,7 @@
 <head>
 <style>
 body {
-  background: url("https://picload.org/image/daaldlri/background.jpg");
+  background: url("https://picload.org/image/dadcrgpl/background.png");
   background-repeat: repeat-y;
   background-size: cover;
   color: white;
@@ -24,6 +24,9 @@ table {
   border-spacing: 0;
   text-align: left;
   font-size: 16px;
+}
+tr {
+  max-width: 100%;
 }
 th, td {
   height: 100%;
@@ -59,11 +62,14 @@ include 'functions.php';
 session_start();
 if (file_exists('db.sqlite')) {
 	if (isset($_SESSION['username'])) {
-		if (isset($_POST['delete'])) {
-			del_responses($_POST['delete']);
+		if (isset($_POST['config'])) {
+			update_config($_POST['config']);
 		}
 		if (isset($_POST['find']) && isset($_POST['respond']) && !empty($_POST['find']) && !empty($_POST['respond'])) {
 			add_response($_POST['find'], $_POST['respond']);
+		}
+		if (isset($_POST['delete'])) {
+			del_responses($_POST['delete']);
 		}
 		if (isset($_POST['users'])) {
 			if (isset($_POST['admins'])) {
@@ -90,6 +96,38 @@ if (file_exists('db.sqlite')) {
 			send($_POST['send']);
 		}?>
 <div style="overflow-y: scroll; height: 95vh">
+<details>
+<summary>Config</summary>
+<form name="config" method="post" action="">
+<table align="center">
+	<tr>
+		<th>Setting</th>
+		<th>Value</th>
+		<th>New Value</th>
+	</tr>
+	<?php
+		$config = get_config();
+		foreach ($config as $element) {
+			$name = $element['name'];
+			$value = $element['value'];
+			echo "<tr>";
+			echo "<td>$name</td>";
+			if (stripos($name, 'token') !== FALSE) {
+				$value = str_repeat('*', strlen($value) - 4) . substr($value, -4);
+				echo "<td>$value</td>";
+				echo "<td><input type=\"text\" name=\"config[$name]\" value=\"$value\"></td>";
+			} else {
+				echo "<td>$value</td>";
+				echo "<td><input type=\"text\" name=\"config[$name]\" value=\"$value\"></td>";
+			}
+			echo "</tr>";
+		}?>
+	<tr>
+		<th colspan="3"><input type="submit" value="Update"></th>
+	</tr>
+</table>
+</form>
+</details>
 <details>
 <summary>Add</summary>
 <form name="add" method="post" action="">
@@ -245,6 +283,7 @@ if (file_exists('db.sqlite')) {
 			} else {
 				echo "Incorrect password!";
 			}
+			header("Refresh:1");
 		}
 	}
 } else if (is_writeable('./')) {
@@ -283,8 +322,7 @@ if (file_exists('db.sqlite')) {
 			$statement->execute();
 		}
 		file_put_contents('.htaccess', "<Files \"db.sqlite\">\nDeny From All\n</Files>");
-		sleep(1);
-		header("Refresh:0");
+		header("Refresh:1");
 	}
 disp_setup();
 } else {
