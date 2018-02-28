@@ -24,6 +24,10 @@ function initdb() {
 		admin INTEGER,
 		ignored INTEGER
 		)',
+	'CREATE TABLE IF NOT EXISTS auth(
+		username TEXT NOT NULL,
+		password TEXT NOT NULL
+		)',
 	'CREATE TABLE IF NOT EXISTS log(
 		entry TEXT NOT NULL,
 		timestamp INTEGER NOT NULL
@@ -440,11 +444,11 @@ function disp_setup() {
 	</tr>
 	<tr>
 		<td>WeatherUnderground API token</td>
-		<td><input type="text" style="width: 100%;" name="wutoken" placeholder="Your WeatherUnderground API token" value="null" required></td>
+		<td><input type="text" style="width: 100%;" name="wutoken" placeholder="Your WeatherUnderground API token" value=""></td>
 	</tr>
 	<tr>
 		<td>WeatherUnderground Location Code</td>
-		<td><input type="text" style="width: 100%;" name="wuloc" placeholder="Your WeatherUnderground Location Code" value="null" required></td>
+		<td><input type="text" style="width: 100%;" name="wuloc" placeholder="Your WeatherUnderground Location Code" value=""></td>
 	</tr>
 	<tr>
 		<td>Logging, check to enable</td>
@@ -457,5 +461,26 @@ function disp_setup() {
 </form>
 EOSETUP;
 	echo $setup;
+}
+//Display the login
+function disp_login() {
+	$login = <<<'EOLOGIN'
+<form name="login" method="post" action="">
+<table align="center" style="width: 50%;">
+	<tr>
+		<td>Username:</td>
+		<td><input type="text" style="width: 100%;" name="username" placeholder="Panel username" required></td>
+	</tr>
+	<tr>
+		<td>Password:</td>
+		<td><input type="password" style="width: 100%;" name="password" placeholder="Panel password" required></td>
+	</tr>
+	<tr>
+		<td colspan="3"><input type="submit" value="Login"></td>
+	</tr>
+</table>
+</form>
+EOLOGIN;
+	echo $login;
 }
 
