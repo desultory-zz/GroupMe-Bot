@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 <style>
@@ -6,13 +7,28 @@ body {
   background-repeat: repeat-y;
   background-size: cover;
   color: white;
-  margin: auto;
+  margin: 0;
+  padding: 0;
   left: 0;
   right: 0;
   position: absolute;
   font-size: 16px;
   text-align: center;
   font-family: "Lucida Console", Monaco, monospace;
+}
+form {
+  border: 0;
+  margin: 0;
+}
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+li {
+  float: left;
+  display: block;
 }
 summary {
   background: rgba(255, 0, 0, .1);
@@ -41,9 +57,7 @@ tr:nth-child(odd) {
   background-color: rgba(255, 255, 255, 0.25);
 }
 input {
-  width: 100%;
-  height: 100%;
-  border: 0px;
+  border: 0;
   box-sizing: border-box;
   color: white;
   text-indent: 0px;
@@ -56,12 +70,26 @@ input {
 </head>
 <body>
 <?php
+header('Content-type: text/html; charset=utf-8');
 ini_set('display_errors', 1);
 error_reporting(-1);
 include 'functions.php';
 session_start();
 if (file_exists('db.sqlite')) {
 	if (isset($_SESSION['username'])) {
+		if (isset($_POST['logout'])) {
+			session_destroy();
+			header("Refresh:1");
+		}
+		if (!empty($_POST['add_admin_name']) && !empty($_POST['add_admin_pass'])) {
+			add_admin($_POST['add_admin_name'], $_POST['add_admin_pass']);
+		}
+		if (isset($_POST['delete_admin'])) {
+			delete_admin($_POST['delete_admin']);
+		}
+		if (isset($_POST['change_admin_pass'])) {
+			change_admin_pass($_POST['change_admin_pass']);
+		}
 		if (isset($_POST['config'])) {
 			update_config($_POST['config']);
 		}
@@ -95,7 +123,46 @@ if (file_exists('db.sqlite')) {
 		if (isset($_POST['send']) && !empty($_POST['send'])) {
 			send($_POST['send']);
 		}?>
-<div style="overflow-y: scroll; height: 95vh">
+<div style="align: right; height: 5vh; background: rgba(0, 0, 0, .5);">
+<ul>
+<?php
+$username = $_SESSION['username'];
+echo "<li>$username Logged in</li>";
+?>
+<form name="logout" method="post" action="">
+	<li><input type="hidden" name="logout" value="logout"></li>
+	<input style="float: right;" type="submit" value="Log Out">
+</form>
+</div>
+<div style="overflow-y: scroll; height: 90vh">
+<details>
+<summary>Panel</summary>
+<form name="panel" method="post" action="">
+<table align="center">
+	<tr>
+		<th>Panel Admins</th>
+		<th>Delete</th>
+		<th>Change Password</th>
+	</tr>
+	<?php
+		$admins = get_panel_admins();
+		foreach ($admins as $element) {
+			$name = $element;
+			echo "<tr>";
+			echo "<td>$name</td>";
+			echo "<td><input type=\"checkbox\" name=\"delete_admin[]\" value=\"$name\"></td>";
+			echo "<td><input type=\"password\" name=\"change_admin_pass[$name]\" placeholder=\"Password\"></td>";
+			echo "</tr>";
+		}?>
+	<tr>
+		<td><input type="text" name="add_admin_name" placeholder="Username"></td>
+		<td colspan="2"><input type="password" name="add_admin_pass" placeholder="Password"></td>
+	<tr>
+		<th colspan="3"><input type="submit" value="Update"></th>
+	</tr>
+</table>
+</form>
+</details>
 <details>
 <summary>Config</summary>
 <form name="config" method="post" action="">
@@ -259,7 +326,7 @@ if (file_exists('db.sqlite')) {
 </details>
 </div>
 <form name="send" method="post" action="">
-<table style="width: 100%; position: fixed; bottom: 0; height: 5%">
+<table style="width: 100%; position: fixed; bottom: 0; height: 5vh">
 	<tr>
 		<th><input type="text" name="send" placeholder="Message to send"></th>
 	</tr>
@@ -271,7 +338,7 @@ if (file_exists('db.sqlite')) {
 		disp_login();
 		if (isset($_POST['username']) && isset($_POST['password'])) {
 			$db = new PDO('sqlite:db.sqlite');
-			$username = $_POST['username'];
+			$username = strtolower($_POST['username']);
 			$password = $_POST['password'];
 			$query = $db->prepare('SELECT password FROM auth WHERE username=:username');
 			$query->bindValue(':username', $username, PDO::PARAM_STR);
@@ -280,10 +347,10 @@ if (file_exists('db.sqlite')) {
 			if (password_verify($password, $hashed)) {
 				echo "Logging in...";
 				$_SESSION['username'] = $username;
+				header("Refresh:1");
 			} else {
 				echo "Incorrect password!";
 			}
-			header("Refresh:1");
 		}
 	}
 } else if (is_writeable('./')) {
@@ -309,12 +376,7 @@ if (file_exists('db.sqlite')) {
 		}
 		$db->exec("INSERT INTO settings (name, value) VALUES ('lights', '0')");
 		$db->exec("INSERT INTO responses (find, respond) VALUES ('test', 'It works!')");
-		$password = password_hash($_POST['pass'], PASSWORD_DEFAULT);
-		$username = $_POST['user'];
-		$statement = $db->prepare('INSERT INTO auth (username, password) VALUES (:username, :password)');
-		$statement->bindValue(':username', $username, PDO::PARAM_STR);
-		$statement->bindValue(':password', $password, PDO::PARAM_STR);
-		$statement->execute();
+		add_admin($_POST['user'], $_POST['pass']);
 		foreach($settings as $variable) {
 			$statement = $db->prepare('INSERT INTO settings (name, value) VALUES (:name, :value)');
 			$statement->bindValue(':name', $variable, PDO::PARAM_STR);

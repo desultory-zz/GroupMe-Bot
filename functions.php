@@ -53,10 +53,72 @@ function get_config_var($parameter) {
 	$result = $query->fetch(PDO::FETCH_ASSOC);
 	return $result['value'];
 }
+//Returns panel admins as an array
+function get_panel_admins() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT username FROM auth');
+	$query->execute();
+	$result = $query->fetchAll(PDO::FETCH_COLUMN, 0);
+	return $result;
+}
+//Adds admins listed in array
+function add_admin($user, $pass) {
+	$db = new PDO('sqlite:db.sqlite');
+	$admins = get_panel_admins();
+	$username = strtolower($user);
+	$password = password_hash($pass, PASSWORD_DEFAULT);
+	if (!in_array($username, $admins)) {
+		$query = $db->prepare('INSERT INTO auth (username, password) VALUES (:username, :password)');
+		$query->bindValue(':username', $username, PDO::PARAM_STR);
+		$query->bindValue(':password', $password, PDO::PARAM_STR);
+		$query->execute();
+	} else {
+		echo "Admin already exists";
+	}
+}
+//Changes an admin password to the specified password
+function change_admin_pass($users) {
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($users as $name=>$pass) {
+		if (!empty($pass)) {
+			$username = strtolower($name);
+			$password = password_hash($pass, PASSWORD_DEFAULT);
+			$query = $db->prepare('UPDATE auth set password=:password WHERE username=:username');
+			$query->bindValue(':username', $username, PDO::PARAM_STR);
+			$query->bindValue(':password', $password, PDO::PARAM_STR);
+			$query->execute();
+		}
+	}
+}
+//Deletes admins listed in array
+function delete_admin($delete) {
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($delete as $name) {
+		$query = $db->prepare('SELECT count(username) FROM auth');
+		$query->execute();
+		$count = $query->fetch();
+		$count = $count[0];
+		if ($count > '1') {
+			$username = strtolower($name);
+			$query = $db->prepare('DELETE FROM auth WHERE username=:name');
+			$query->bindValue(':name', $username, PDO::PARAM_STR);
+			$query->execute();
+		} else {
+			echo "Cannot delete last admin";
+		}
+	}
+}
 //Returns the responses as an array
 function get_responses() {
 	$db = new PDO('sqlite:db.sqlite');
 	$query = $db->prepare('SELECT find,respond FROM responses');
+	$query->execute();
+	return $query->fetchAll();
+}
+//Returns the config as an array
+function get_config() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT name,value FROM config');
 	$query->execute();
 	return $query->fetchAll();
 }
@@ -421,34 +483,46 @@ function del_settings($delete) {
 		$query->execute();
 	}
 }
+//Updates the config, takes an array of config paramaters with the element name being the paramter and the value being the value
+function update_config($config) {
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($config as $name=>$value) {
+		if ($value[0] != "*") {
+			$query = $db->prepare('UPDATE config SET value=:value WHERE name=:name');
+			$query->bindValue(':name', $name, PDO::PARAM_STR);
+			$query->bindValue(':value', $value, PDO::PARAM_STR);
+			$query->execute();
+		}
+	}
+}
 //Display the setup form
 function disp_setup() {
 	$setup = <<<'EOSETUP'
 <form name="setup" method="post" action="">
 <table align="center" style="width: 50%;">
 	<tr>
-		<td>Panel Username:</td>
+		<td>Panel username:</td>
 		<td><input type="text" style="width: 100%;" name="user" placeholder="Panel username" required></td>
 	</tr>
 	<tr>
-		<td>Panel Password:</td>
+		<td>Panel password:</td>
 		<td><input type="password" style="width: 100%;" name="pass" placeholder="Panel password" required></td>
 	</tr>
 	<tr>
-		<td>GroupMe API token</td>
+		<td>GroupMe API token:</td>
 		<td><input type="text" style="width: 100%;" name="apitoken" placeholder="Your GroupMe API token" required></td>
 	</tr>
 	<tr>
-		<td>GroupMe Bot Token</td>
-		<td><input type="text" style="width: 100%;" name="bottoken" placeholder="Your GroupMe bot token" required></td>
+		<td>GroupMe Bot token:</td>
+		<td><input type="text" style="width: 100%;" name="bottoken" placeholder="Your GroupMe Bot token" required></td>
 	</tr>
 	<tr>
-		<td>WeatherUnderground API token</td>
+		<td>WeatherUnderground API token:</td>
 		<td><input type="text" style="width: 100%;" name="wutoken" placeholder="Your WeatherUnderground API token" value=""></td>
 	</tr>
 	<tr>
-		<td>WeatherUnderground Location Code</td>
-		<td><input type="text" style="width: 100%;" name="wuloc" placeholder="Your WeatherUnderground Location Code" value=""></td>
+		<td>WeatherUnderground location code:</td>
+		<td><input type="text" style="width: 100%;" name="wuloc" placeholder="Your WeatherUnderground location code" value=""></td>
 	</tr>
 	<tr>
 		<td>Logging, check to enable</td>
