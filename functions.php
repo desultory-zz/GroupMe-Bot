@@ -3,19 +3,106 @@
 function debugvar($variable) {
 	file_put_contents('debug.txt', print_r($variable, true));
 }
-//logs all chat to specified log file
-function logging($userid, $name, $text) {
-	include 'config.php';
-	if ($log) {
-		if (!is_dir($logdir)) {
-			mkdir($logdir, $logdirchmod);
+//Initialize the database
+function initdb() {
+	$db = new PDO('sqlite:db.sqlite');
+	$dbcmds = ['CREATE TABLE IF NOT EXISTS config(
+		name TEXT NOT NULL,
+		value TEXT NOT NULL
+		)',
+	'CREATE TABLE IF NOT EXISTS settings(
+		name TEXT NOT NULL,
+		value INTEGER NOT NULL
+		)',
+	'CREATE TABLE IF NOT EXISTS responses(
+		find TEXT NOT NULL,
+		respond TEXT NOT NULL
+		)',
+	'CREATE TABLE IF NOT EXISTS users(
+		name TEXT NOT NULL,
+		userid TEXT NOT NULL,
+		admin INTEGER,
+		ignored INTEGER
+		)',
+	'CREATE TABLE IF NOT EXISTS log(
+		entry TEXT NOT NULL,
+		timestamp INTEGER NOT NULL
+		)',
+	];
+	foreach ($dbcmds as $cmd) {
+		$db->exec($cmd);
+	}
+	$clean = 1;
+	foreach ($db->errorInfo() as $error) {
+		if ($error != 0) {
+			$clean = $error;
 		}
-		file_put_contents($logdir . '/' . $logfile, "$userid($name): $text\n", FILE_APPEND);
+	}
+	return $clean;
+}
+//Gets the specified config variable value from the database
+function get_config_var($parameter) {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT value FROM config WHERE name=:name');
+	$query->bindValue(':name', $parameter, PDO::PARAM_STR);
+	$query->execute();
+	$result = $query->fetch(PDO::FETCH_ASSOC);
+	return $result['value'];
+}
+//Returns the responses as an array
+function get_responses() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT find,respond FROM responses');
+	$query->execute();
+	return $query->fetchAll();
+}
+//Returns the chat log
+function get_log() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT entry,timestamp FROM log');
+	$query->execute();
+	return $query->fetchAll();
+}
+//Returns the admins as an array
+function get_admins() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT userid FROM users WHERE admin=1');
+	$query->execute();
+	return $query->fetchAll(PDO::FETCH_COLUMN, 0);
+}
+//Returns the ignored users as an array
+function get_ignored() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT userid FROM users WHERE ignored=1');
+	$query->execute();
+	return $query->fetchAll(PDO::FETCH_COLUMN, 0);
+}
+//Returns the settings as an array
+function get_settings() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('SELECT name,value FROM settings');
+	$query->execute();
+	$result = $query->fetchAll();
+	foreach ($result as $setting) {
+		$settings[$setting[0]] = $setting[1];
+	}
+	return $settings;
+}
+//Logs all chat to the database
+function logging($userid, $name, $text) {
+	$db = new PDO('sqlite:db.sqlite');
+	if (get_config_var('log')) {
+		$entry = "$name($userid): $text";
+		$statement = $db->prepare('INSERT INTO log (entry, timestamp) VALUES (:entry, :timestamp)');
+		$statement->bindValue(':entry', $entry, PDO::PARAM_STR);
+		$statement->bindValue(':timestamp', time(), PDO::PARAM_STR);
+		$statement->execute();
 	}
 }
+
 //Basic response (no images)
 function basic_response($text, $name, $userid) {
-	$responses = read_array('responses.php');
+	$responses = get_responses();
 	foreach ($responses as $element) {
 		if (stripos($text, $element[0]) !== FALSE) {
 			$message = $element[1];
@@ -31,7 +118,8 @@ function basic_response($text, $name, $userid) {
 }
 //WUnderground response
 function weather_response($text) {
-	include 'config.php';
+	$wutoken = get_config_var('wutoken');
+	$wuloc = get_config_var('wuloc');
 	if (stripos($text, 'weather') !== FALSE) {
 		if (isset($wutoken) && isset($wuloc)) {
 			$rawweather = json_decode(curl_get("https://api.wunderground.com/api/$wutoken/conditions/q/$wuloc.json"));
@@ -96,36 +184,16 @@ function curl_post($postfields) {
 }
 //Send message function, takes a message as input and posts to GroupMe
 function send($message) {
-	include 'config.php';
+	$bottoken = get_config_var('bottoken');
 	$postdata = [
 		'bot_id' => $bottoken,
 		'text' => $message
 	];
 	curl_post(http_build_query($postdata));
 }
-//Send message function, takes a message as input and posts to GroupMe
-function send_configurl($userid) {
-	include 'config.php';
-	$dm = [
-		'source_guid' => uniqid(),
-		'recipient_id' => $userid,
-		'text' => "asdf"
-	];
-	$postdata = [
-		'direct_message' => $dm
-	];
-	$postfields = json_encode($postdata);
-	send($postfields);
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, "https://api.groupme.com/v3/direct_messages?token=$apitoken");
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	$result = curl_exec($ch);
-	curl_close($ch);
-}
 //Send image function, takes message and img url as inputs and posts to GroupMe
 function send_img($message, $image) {
-	include 'config.php';
+	$bottoken = get_config_var('bottoken');
 	$attachments = [
 		'type' => 'image',
 		'url' => $image
@@ -139,7 +207,7 @@ function send_img($message, $image) {
 }
 //Mention function, takes a message and name as inputs and posts to GroupMe
 function mention($message, $name) {
-	include 'config.php';
+	$bottoken = get_config_var('bottoken');
 	$loci = [
 		stripos($message, $name),
 		strlen($name)
@@ -156,21 +224,10 @@ function mention($message, $name) {
 	];
 	curl_post(json_encode($postdata));
 }
-//Store array function, takes an array and file as input and stores in a format that can later be loaded using read_array
-function store_array($array, $file) {
-	$array = json_encode($array);
-	file_put_contents($file, "<?php\n" . $array);
-}
-//Read array function, takes a file saved with store_array as input and can be assigned to a variable
-function read_array($file) {
-	$array = file_get_contents($file);
-	$array = str_replace('<?php', null, $array);
-	$array = json_decode($array, true);
-	return $array;
-}
 //Get bot group function, returns the group id of the bot
 function get_bot_group() {
-	include 'config.php';
+	$apitoken = get_config_var('apitoken');
+	$bottoken = get_config_var('bottoken');
 	$bots = json_decode(curl_get("https://api.groupme.com/v3/bots?token=$apitoken"));
 	foreach($bots->response as $element) {
 		if ($element->bot_id == $bottoken) {
@@ -180,7 +237,7 @@ function get_bot_group() {
 }
 //Get user id function, takes a name as input and returns the user id
 function get_user_id($name) {
-	include 'config.php';
+	$apitoken = get_config_var('apitoken');
 	$user_id = 'No member with that name found';
 	$groupid = get_bot_group();
 	$groups = json_decode(curl_get("https://api.groupme.com/v3/groups?token=$apitoken"));
@@ -197,7 +254,7 @@ function get_user_id($name) {
 }
 //Get name function, takes a user id as input and returns the name associated with that user id
 function get_name($userid) {
-	include 'config.php';
+	$apitoken = get_config_var('apitoken');
 	$name = 'Invalid userid';
 	$groupid = get_bot_group();
 	$groups = json_decode(curl_get("https://api.groupme.com/v3/groups?token=$apitoken"));
@@ -212,79 +269,38 @@ function get_name($userid) {
 	}
 	return $name;
 }
-//Add response fucntion, adds a response from the find and response arguments passed
-function add_response($find, $response) {
-	$responses = read_array('responses.php');
-	$counter = 0;
-	$position = false;
-	foreach($responses as $element) {
-		if (stripos($element[0], $find) !== FALSE || stripos($find, $element[0]) !== FALSE) {
-			$position = $counter;
-		}
-	$counter++;
-	}
-	if ($position) {
-		echo "<h2>Response already exists</h2><br><br>";
-	} else {
-		$responses[count($responses)] = [$find, $response];
-		store_array($responses, 'responses.php');
-	}
-}
-//Delete response by array number function, deletes responses by array index specified
-function del_responses($delete) {
-	$responses = read_array('responses.php');
-	foreach ($delete as $element) {
-		$responses[$element] = null;
-	}
-	$responses = array_values(array_filter($responses));
-	store_array($responses, 'responses.php');
-	echo "<b>Responses updated</b><br>";
-}
-//Update setting function, takes an array of setting values as an input and sets all settings appropriately
-function update_settings($update) {
-	$settings = read_array('settings.php');
-	foreach ($settings as $key=>$value) {
-		if (isset($update[$key])) {
-			$settings[$key] = 1;
-		} else {
-			$settings[$key] = 0;
-		}
-	}
-	store_array($settings, 'settings.php');
-}
-//Deletes asetting by number function, delete settings specified by an array of indexes
-function del_setting_bynum($delete) {
-	$settings = read_array('settings.php');
-	foreach ($settings as $key=>$value) {
-		if (isset($delete[$key])) {
-			unset($settings[$key]);
-		}
-	}
-	store_array($settings, 'settings.php');
-}
-//Adds a setting by name and enables it by default
-function add_setting($setting) {
-	$settings = read_array('settings.php');
-	if (! isset($settings[$setting])) {
-		$settings[$setting] = 1;
-		store_array($settings, 'settings.php');
-	} else {
-		echo "<b>Setting already exists</b><br>";
-	}
-}
-//Get users function, returns an array containing all users and their user ids
+//Get users function, gets user information from the groupme api, adds it to the database, and returns it as an array
 function get_users() {
-	include 'config.php';
+	$apitoken = get_config_var('apitoken');
 	$groupid = get_bot_group();
 	$groups = json_decode(curl_get("https://api.groupme.com/v3/groups?token=$apitoken"));
 	$index = 0;
+	$db = new PDO('sqlite:db.sqlite');
 	foreach($groups->response as $element) {
 		if ($element->id == $groupid) {
 			foreach($element->members as $member) {
+				$userid = $member->user_id;
+				$name = $member->nickname;
+				$avatar = $member->image_url;
+				$query = $db->prepare('SELECT userid FROM users WHERE userid=:userid');
+				$query->bindValue('userid', $userid, PDO::PARAM_STR);
+				$query->execute();
+				$result = $query->fetch(PDO::FETCH_ASSOC);
+				if (isset($result['userid'])) {
+					$query = $db->prepare('UPDATE users SET name=:name WHERE userid=:userid');
+					$query->bindValue(':name', $name, PDO::PARAM_STR);
+					$query->bindValue(':userid', $userid, PDO::PARAM_STR);
+					$query->execute();
+				} else {
+					$query = $db->prepare('INSERT INTO users (name, userid) VALUES (:name, :userid)');
+					$query->bindValue(':name', $name, PDO::PARAM_STR);
+					$query->bindValue(':userid', $userid, PDO::PARAM_STR);
+					$query->execute();
+				}
 				$members[$index] = [
-					"userid" => $member->user_id,
-					"name" => $member->nickname,
-					"avatar" => $member->image_url
+					"userid" => $userid,
+					"name" => $name,
+					"avatar" => $avatar
 				];
 			$index++;
 			}
@@ -292,25 +308,154 @@ function get_users() {
 	}
 	return $members;
 }
-//Update admins function, takes an array of admin ids as an input and rewrites the admins to only include them
+//Adds a response to the database, uses input find and respond where find is the text that is searched for and respond is the text that is retrned
+function add_response($find, $respond) {
+	$responses = get_responses();
+	$exists = 0;
+	foreach ($responses as $element) {
+		if (stripos($element[0], $find) !== FALSE || stripos($find, $element[0]) !== FALSE) {
+			$exists = 1;
+		}
+	}
+	if (!$exists) {
+		$db = new PDO('sqlite:db.sqlite');
+		$query = $db->prepare('INSERT INTO responses (find, respond) VALUES (:find, :respond)');
+		$query->bindValue(':find', $find, PDO::PARAM_STR);
+		$query->bindValue(':respond', $respond, PDO::PARAM_STR);
+		$query->execute();
+	} else {
+		echo "Similar find already exists<br>";
+	}
+
+}
+//Deletes responses from the database, takes the "find" string as input
+function del_responses($delete) {
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($delete as $find) {
+		$query = $db->prepare('DELETE FROM responses WHERE find=:find');
+		$query->bindValue(':find', $find, PDO::PARAM_STR);
+		$query->execute();
+	}
+}
+//Deletes all admins from the database
+function delete_admins() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('UPDATE users SET admin = 0');
+	$query->execute();
+}
+//Updates the admins by deleting all of them and then adding the specified userids
 function update_admins($admins) {
-	foreach ($admins as $element=>$key) {
-		if (isset($adminsnew)) {
-			$adminsnew[sizeof($adminsnew)] = $element;
-		} else {
-			$adminsnew[0] = $element;
+	delete_admins();
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($admins as $element) {
+		$query = $db->prepare('UPDATE users SET admin=:admin WHERE userid=:userid');
+		$query->bindValue(':userid', $element, PDO::PARAM_STR);
+		$query->bindValue(':admin', '1', PDO::PARAM_STR);
+		$query->execute();
+	}
+}
+//Deletes all ignored users from the database
+function delete_ignored() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('UPDATE users SET ignored = 0');
+	$query->execute();
+}
+//Updates the users by deleting all of them and then adding the specified userids
+function update_ignored($ignored) {
+	delete_ignored();
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($ignored as $element) {
+		$query = $db->prepare('UPDATE users SET ignored=:ignored WHERE userid=:userid');
+		$query->bindValue(':userid', $element, PDO::PARAM_STR);
+		$query->bindValue(':ignored', '1', PDO::PARAM_STR);
+		$query->execute();
+	}
+}
+//Resets all settings in the database
+function reset_settings() {
+	$db = new PDO('sqlite:db.sqlite');
+	$query = $db->prepare('UPDATE settings SET value = 0');
+	$query->execute();
+}
+//Updates the settings by restting all of the settings and then enabling the specified ones
+function update_settings($settings) {
+	reset_settings();
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($settings as $element) {
+		$query = $db->prepare('UPDATE settings SET value=:value WHERE name=:name');
+		$query->bindValue(':name', $element, PDO::PARAM_STR);
+		$query->bindValue(':value', '1', PDO::PARAM_STR);
+		$query->execute();
+	}
+}
+//Adds the specified setting to the array if it doesn't already exist
+function add_setting($setting) {
+	$settings = get_settings();
+	$exists = 0;
+	foreach ($settings as $element=>$key) {
+		if ($setting == $element) {
+			$exists = 1;
 		}
 	}
-	store_array($adminsnew, 'admins.php');
-}
-//Update ignore function, takes an array of ignored user ids as an input and rewrites the ignores to only include them
-function update_ignore($ignore) {
-	foreach ($ignore as $element=>$key) {
-		if (isset($ignorenew)) {
-			$ignorenew[sizeof($ignorenew)] = $element;
-		} else {
-			$ignorenew[0] = $element;
-		}
+	if (!$exists) {
+		$db = new PDO('sqlite:db.sqlite');
+		$query = $db->prepare('INSERT INTO settings (name, value) VALUES (:name, :value)');
+		$query->bindValue(':name', $setting, PDO::PARAM_STR);
+		$query->bindValue(':value', '1', PDO::PARAM_STR);
+		$query->execute();
+	} else {
+		echo "Setting already exists<br>";
 	}
-	store_array($ignorenew, 'ignore.php');
+
 }
+//Deletes responses from the database, takes the "find" string as input
+function del_settings($delete) {
+	$db = new PDO('sqlite:db.sqlite');
+	foreach ($delete as $setting) {
+		$query = $db->prepare('DELETE FROM settings WHERE name=:setting');
+		$query->bindValue(':setting', $setting, PDO::PARAM_STR);
+		$query->execute();
+	}
+}
+//Display the setup form
+function disp_setup() {
+	$setup = <<<'EOSETUP'
+<form name="setup" method="post" action="">
+<table align="center" style="width: 50%;">
+	<tr>
+		<td>Panel Username:</td>
+		<td><input type="text" style="width: 100%;" name="user" placeholder="Panel username" required></td>
+	</tr>
+	<tr>
+		<td>Panel Password:</td>
+		<td><input type="password" style="width: 100%;" name="pass" placeholder="Panel password" required></td>
+	</tr>
+	<tr>
+		<td>GroupMe API token</td>
+		<td><input type="text" style="width: 100%;" name="apitoken" placeholder="Your GroupMe API token" required></td>
+	</tr>
+	<tr>
+		<td>GroupMe Bot Token</td>
+		<td><input type="text" style="width: 100%;" name="bottoken" placeholder="Your GroupMe bot token" required></td>
+	</tr>
+	<tr>
+		<td>WeatherUnderground API token</td>
+		<td><input type="text" style="width: 100%;" name="wutoken" placeholder="Your WeatherUnderground API token" value="null" required></td>
+	</tr>
+	<tr>
+		<td>WeatherUnderground Location Code</td>
+		<td><input type="text" style="width: 100%;" name="wuloc" placeholder="Your WeatherUnderground Location Code" value="null" required></td>
+	</tr>
+	<tr>
+		<td>Logging, check to enable</td>
+		<td><input type="checkbox" style="width: 100%;" name="log" value="1" checked required></td>
+	</tr>
+	<tr>
+		<td colspan="3"><input type="submit" value="Initialize"></td>
+	</tr>
+</table>
+</form>
+EOSETUP;
+	echo $setup;
+}
+

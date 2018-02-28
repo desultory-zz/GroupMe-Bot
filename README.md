@@ -4,11 +4,11 @@ It has the ability to respond to certain phrases, mention users, give the weathe
 
 First, you need to go to https://dev.groupme.com/bots and register a bot there, you should be asked for a callback url, the callback url is the url where the bot.php will be sitting.  An example is https://your.website/botdiectory/bot.php
 
-I recommend running each instance of this bot in it's own subdirectory as it will be using it's own config, response, and admin file and its own logging file and directory.
+I recommend running each instance of this bot in it's own subdirectory as it will be using it's own database (db.sqlite)
 
-By default, logs will be made under /logs/ so you can restrict access to this directory through your webserver (This way people cant read your chat history if they find the directory)
+By default, logs will be made added to the database and displayed in the log section of the site
 
-Once you have creted your bot, go to the directory where the bot is running and open "panel.php" in a web browser.  Input your API token and bot token.  Everything else is optional and logging information will be set to the default if you leave it blank.  This script will automatically add you to the admins list.  The config file created will be config.php.  If you want to change anything you can either delete the config.php file and open the panel again or you can edit it manueally.  After the config file is created, the panel will be a way to manage responses, settings, and send messages from the bot.
+Once you have creted your bot, go to the directory where the bot is running and open "panel.php" in a web browser.  Input your API token and bot token.  Everything else is optional. The  panel will be a way to manage responses, settings, and send messages from the bot.
 
 By default, the bot will only reapond to "test".  You can add and remove responses by going to "panel.php" in a web browser or in the chat by using the commands below.
 

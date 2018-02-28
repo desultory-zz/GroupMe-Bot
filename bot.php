@@ -11,11 +11,11 @@ $type = $callback->sender_type;
 $text = $callback->text;
 $userid = $callback->user_id;
 
-$admins = read_array('admins.php');
-$ignored = read_array('ignore.php');
-$settings = read_array('settings.php');
+$admins = get_admins();
+$ignored = get_ignored();
+$settings = get_settings();
 
-//If logging is enables in the config, this logs the chat to specified file and directory
+//If logging is enabled in the config, this logs the chat to the database
 logging($userid, $name, $text);
 
 //Only handles messages from users to prevent infinite loops
