@@ -64,6 +64,7 @@ input {
   font-size: 16px;
   background: rgba(0, 0, 0, 0);
   font-family: "Lucida Console", Monaco, monospace;
+  width: 100%;
 }
 </style>
 	<title>PHP GroupMe Bot</title>
