@@ -133,7 +133,7 @@ echo "<li>$username Logged in</li>";
 ?>
 <form name="logout" method="post" action="">
 	<li><input type="hidden" name="logout" value="logout"></li>
-	<input style="float: right;" type="submit" value="Log Out">
+	<input style="float: right; width: unset;" type="submit" value="Log Out">
 </form>
 </div>
 <div style="overflow-y: scroll; height: 90vh">
