@@ -3,7 +3,7 @@
 <head>
 <style>
 body {
-  background: url("https://picload.org/image/dadcrgpl/background.png");
+  background: url("background.jpg");
   background-repeat: repeat-y;
   background-size: cover;
   color: white;
