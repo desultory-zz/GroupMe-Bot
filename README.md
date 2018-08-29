@@ -8,11 +8,11 @@ I recommend running each instance of this bot in it's own subdirectory as it wil
 
 By default, logs will be made added to the database and displayed in the log section of the site
 
-Once you have creted your bot, go to the directory where the bot is running in a web browser.  Fill in all details, wunderground data is optionsl.
+Once you have created your bot, go to the directory where the bot is running in a web browser.  Fill in all details, wunderground data is optional.
 
- The  panel will be a way to manage responses, settings, and send messages from the bot.
+The panel will be a way to manage responses, settings, and send messages from the bot.
 
-By default, the bot will only reapond to "test".  You can add and remove responses by going to the panel and changing the responses.
+By default, the bot will only respond to "test".  You can add and remove responses by going to the panel and changing the responses.
 
 You can make the bot mention a user in a response by adding %n to the response and make it list their userid with %u
 
